@@ -96,6 +96,6 @@ We use Duffing equation, Van der Pol Mathieu oscillator, FitzHugh-Nagumo partial
    - [evaluate_fhn_high_dim_u.ipynb](./examples/evaluate_fhn_high_dim_u.ipynb)
 
 
-### Korteweg-De Vries equation (Cleaning in progress)
+### Korteweg-De Vries equation (Clearing in progress)
 
 See the files in [kdv experiments](./examples/kdv_experiments)
