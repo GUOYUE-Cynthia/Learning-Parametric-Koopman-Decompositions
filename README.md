@@ -33,7 +33,7 @@ We use Duffing equation, Van der Pol Mathieu oscillator, FitzHugh-Nagumo partial
 ### Enter [examples](./examples)
 * Type this in terminal 
     ```bash
-    $python generate_data_duffing.py config_duffing.json
+    $cd examples
     ```
 
 #### Duffing equation
@@ -94,3 +94,8 @@ We use Duffing equation, Van der Pol Mathieu oscillator, FitzHugh-Nagumo partial
 3. Evaluate models in
 
    - [evaluate_fhn_high_dim_u.ipynb](./examples/evaluate_fhn_high_dim_u.ipynb)
+
+
+### Korteweg-De Vries equation
+
+See the files in [kdv experiments](./examples/kdv_experiments)
