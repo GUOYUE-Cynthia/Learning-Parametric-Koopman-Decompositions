@@ -41,7 +41,7 @@ Look at [examples](./examples).
     ```bash
     $python train_model_duffing.py config_duffing.json
     ```
-3. Evaluate models
-    ```bash
+3. Evaluate models in\\
+
     [evaluate_duffing.ipynb](./examples/evaluate_duffing.ipynb)
-    ```
+    
