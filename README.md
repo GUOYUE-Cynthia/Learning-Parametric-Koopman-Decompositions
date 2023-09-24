@@ -31,7 +31,13 @@ This project uses `python 3.8`. Set up the project for development using the fol
 We use Duffing equation, Van der Pol Mathieu oscillator, FitzHugh-Nagumo partial differential equation and Korteweg-De Vries equation as examples to show how to use this package.
 
 Look at [examples](./examples).
-### Duffing equation
+
+### Enter [examples](./examples)
+    ```bash
+    $cd examples
+    ```
+
+#### Duffing equation
 
 1. Generate data
     ```bash
@@ -44,4 +50,48 @@ Look at [examples](./examples).
 3. Evaluate models in
 
    - [evaluate_duffing.ipynb](./examples/evaluate_duffing.ipynb)
-    
+
+#### Van der Pol Mathieu oscillator
+
+1. Generate data
+    ```bash
+    $python generate_data_vdpm.py config_vdpm.json
+    ```
+2. Train models
+    ```bash
+    $python train_model_vdpm.py config_vdpm.json
+    ```
+3. Evaluate models in
+
+   - [evaluate_vdpm.ipynb](./examples/evaluate_vdpm.ipynb)
+
+
+#### FitzHugh-Nagumo PDE
+
+* Input u is 1-dimensional
+
+1. Generate data
+    ```bash
+    $python generate_data_fhn.py config_fhn.json
+    ```
+2. Train models
+    ```bash
+    $python train_model_fhn.py config_fhn.json
+    ```
+3. Evaluate models in
+
+   - [evaluate_fhn.ipynb](./examples/evaluate_fhn.ipynb)
+
+* Input u is 3-dimensional
+
+1. Generate data
+    ```bash
+    $python generate_data_fhn_high_dim_u.py config_fhn.json
+    ```
+2. Train models
+    ```bash
+    $python train_model_fhn_high_dim_u.py config_fhn.json
+    ```
+3. Evaluate models in
+
+   - [evaluate_fhn_high_dim_u.ipynb](./examples/evaluate_fhn_high_dim_u.ipynb)
