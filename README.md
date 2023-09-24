@@ -33,7 +33,7 @@ We use Duffing equation, Van der Pol Mathieu oscillator, FitzHugh-Nagumo partial
 Look at [examples](./examples).
 
 ### Enter [examples](./examples)
-    ```bash
+    ```shell
     $cd examples
     ```
 
