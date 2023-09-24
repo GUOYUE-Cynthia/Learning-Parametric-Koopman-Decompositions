@@ -30,9 +30,8 @@ This project uses `python 3.8`. Set up the project for development using the fol
 
 We use Duffing equation, Van der Pol Mathieu oscillator, FitzHugh-Nagumo partial differential equation and Korteweg-De Vries equation as examples to show how to use this package.
 
-Look at [examples](./examples).
-
 ### Enter [examples](./examples)
+
     ```shell
     $cd examples
     ```
