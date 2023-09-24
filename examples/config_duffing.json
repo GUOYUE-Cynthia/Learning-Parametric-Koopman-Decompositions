@@ -1,0 +1,16 @@
+{
+    "data_settings": {
+        "data_path": "results/data_test",
+        "n_total_data": 2,
+        "n_traj_per_param": 1,
+        "traj_len": 5
+    },
+    "nn_settings": {
+        "weights_path": "results/data_test",
+        "n_psi_train": 22,
+        "dict_layer_size": [100, 100, 100],
+        "K_layer_size": [256, 256, 256],
+        "edmd_epochs": 2,
+        "pknn_epochs": 5
+    }
+}
