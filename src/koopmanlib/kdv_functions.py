@@ -21,27 +21,6 @@ def kdv_exact(x, seed):
     IC = b0*IC0 + b1*IC1 + b2*IC2
     return IC
 
-# def kdv_ode(t, y, L, param, v_list, x):
-#     """Differential equations for the KdV equation, discretized in x."""
-#     # Compute the x derivatives using the pseudo-spectral method.
-#     yx = psdiff(y, period=L)
-#     yxxx = psdiff(y, period=L, order=3)
-
-#     # Compute du/dt.    
-#     dydt = -y*yx - yxxx
-    
-#     param = param.reshape(1,-1)
-    
-#     sin_param = np.sin(np.pi* param)
-    
-#     param_spatial = sin_param @ v_list
-    
-#     param_spatial = param_spatial.reshape(-1, )
-    
-#     rhs = dydt + param_spatial
-
-#     return rhs
-
 def kdv_ode(t, y, L, param, v_list, x):
     """Differential equations for the KdV equation, discretized in x."""
     # Compute the x derivatives using the pseudo-spectral method.
@@ -53,7 +32,9 @@ def kdv_ode(t, y, L, param, v_list, x):
     
     param = param.reshape(1,-1)
     
-    param_spatial = param @ v_list
+    sin_param = np.sin(np.pi* param)
+    
+    param_spatial = sin_param @ v_list
     
     param_spatial = param_spatial.reshape(-1, )
     
@@ -61,8 +42,27 @@ def kdv_ode(t, y, L, param, v_list, x):
 
     return rhs
 
+# def kdv_ode(t, y, L, param, v_list):
+#     """Differential equations for the KdV equation, discretized in x."""
+#     # Compute the x derivatives using the pseudo-spectral method.
+#     yx = psdiff(y, period=L)
+#     yxxx = psdiff(y, period=L, order=3)
 
-def kdv_solution(y0, t, L, param, v_list, x):
+#     # Compute du/dt.    
+#     dydt = -y*yx - yxxx
+    
+#     param = param.reshape(1,-1)
+    
+#     param_spatial = param @ v_list
+    
+#     param_spatial = param_spatial.reshape(-1, )
+    
+#     rhs = dydt + param_spatial
+
+#     return rhs
+
+
+def kdv_solution(y0, t, L, param, v_list):
     """Use odeint to solve the KdV equation on a periodic domain.
     
     `y0` is initial condition, `t` is the array of time values at which
@@ -70,7 +70,7 @@ def kdv_solution(y0, t, L, param, v_list, x):
     domain."""
     
     t_span = [0,t]
-    soln = solve_ivp(kdv_ode, t_span, y0, t_eval=np.asarray(t_span), args=(L, param, v_list, x), method='RK23')
+    soln = solve_ivp(kdv_ode, t_span, y0, t_eval=np.asarray(t_span), args=(L, param, v_list), method='RK23')
     return soln
 
 def compute_error(dic, compute_kdv_soln_func, compute_obs_func_model, error_func, y0_pred_list, param_pred_list, dx):

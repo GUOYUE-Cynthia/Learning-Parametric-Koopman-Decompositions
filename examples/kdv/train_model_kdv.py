@@ -10,7 +10,7 @@ import json
 from tensorflow.keras.optimizers import Adam
 
 
-from koopmanlib.dictionary import PsiNN
+from koopmanlib.dictionary import PsiNN, PsiNN_obs
 from koopmanlib.param_solver import KoopmanParametricDLSolver, KoopmanLinearDLSolver, KoopmanBilinearDLSolver
 
 config_file = sys.argv[1]
@@ -19,15 +19,19 @@ with open(config_file, 'r') as f:
 
 data_path = config['data_settings']['data_path']
 weights_path = config['nn_settings']['weights_path']
+forcing_type = config['data_settings']['forcing_type']
 
 n_psi_train = config['nn_settings']['n_psi_train']
-mu = config['data_settings']['mu']
 
 
-target_dim = 2
-param_dim = 1
 
-n_psi = 1 + target_dim + n_psi_train
+Nx = config['data_settings']['Nx']
+L = 2 * np.pi
+dx = L / (Nx - 1.0)
+target_dim = Nx
+param_dim = 3
+
+n_psi = 1 + 1 + 1 + n_psi_train
 
 dict_layer_size = config['nn_settings']['dict_layer_size']
 K_layer_size = config['nn_settings']['K_layer_size']
@@ -37,14 +41,14 @@ bilinear_epochs = config['nn_settings']['bilinear_epochs']
 pknn_epochs = config['nn_settings']['pknn_epochs']
 
 # Load data
-dict_data = np.load(os.path.join(data_path,'vdpm_data_mu_'+str(mu)+'.npy'), allow_pickle=True)
+dict_data = np.load(os.path.join(data_path,'data_kdv_'+forcing_type+'.npy'), allow_pickle=True)
 
 data_x = dict_data[()]['data_x']
 data_y = dict_data[()]['data_y']
 data_u = dict_data[()]['data_u']
 
 # PK-NN
-dic_pk = PsiNN(layer_sizes=dict_layer_size, n_psi_train=n_psi_train)
+dic_pk = PsiNN_obs(layer_sizes=dict_layer_size, n_psi_train=n_psi_train, dx=dx)
 
 solver_pk = KoopmanParametricDLSolver(target_dim=target_dim, param_dim=param_dim, n_psi=n_psi, dic=dic_pk)
 
@@ -59,7 +63,7 @@ model_pk.compile(optimizer=Adam(0.001),
 
 lr_callbacks = tf.keras.callbacks.ReduceLROnPlateau(monitor='loss',
                                                     factor=0.1,
-                                                    patience=200,
+                                                    patience=50,
                                                     verbose=0,
                                                     mode='auto',
                                                     min_delta=0.0001,
@@ -74,17 +78,15 @@ history = model_pk.fit(x=[data_x, data_y, data_u],
                     verbose=1)
 
 
-model_pk.save_weights(os.path.join(weights_path, 'model_pk_vdpm_mu_'+str(mu)+'.h5'))
+model_pk.save_weights(os.path.join(weights_path, 'pk_kdv_weights_'+forcing_type+'.h5'))
 
 # Linear Model: Dynamics is $Az +Bu$
 
-dic_linear = PsiNN(layer_sizes=dict_layer_size, n_psi_train=n_psi_train)
+dic_linear = PsiNN_obs(layer_sizes=dict_layer_size, n_psi_train=n_psi_train, dx=dx)
 
 solver_linear = KoopmanLinearDLSolver(dic=dic_linear, target_dim=target_dim, param_dim=param_dim, n_psi=n_psi)
 
 model_linear = solver_linear.build_model()
-
-zeros_data_y_train.shape
 
 solver_linear.build(model_linear,
                     data_x,
@@ -97,13 +99,13 @@ solver_linear.build(model_linear,
                     log_interval=20,
                     lr_decay_factor=0.1)
 
-model_linear.save_weights(os.path.join(weights_path, 'model_linear_vdpm_mu_'+str(mu)+'.h5'))
+model_linear.save_weights(os.path.join(weights_path, 'linear_kdv_weights_'+forcing_type+'.h5'))
 
 
 
 # Bilinear Model: Dynamics is $Az + \sum_{i=1}^{N_{u}}B_{i}zu_{i}$
 
-dic_bilinear = PsiNN(layer_sizes=dict_layer_size, n_psi_train=n_psi_train)
+dic_bilinear = PsiNN_obs(layer_sizes=dict_layer_size, n_psi_train=n_psi_train, dx=dx)
 
 solver_bilinear = KoopmanBilinearDLSolver(dic=dic_bilinear, target_dim=target_dim, param_dim=param_dim, n_psi=n_psi)
 
@@ -120,4 +122,4 @@ solver_bilinear.build(model_bilinear,
                     log_interval=20,
                     lr_decay_factor=0.1)
 
-model_bilinear.save_weights(os.path.join(weights_path, 'model_bilinear_vdpm_mu_'+str(mu)+'.h5'))
+model_bilinear.save_weights(os.path.join(weights_path, 'bilinear_kdv_weights_'+forcing_type+'.h5'))

@@ -37,6 +37,10 @@ We use Duffing equation, Van der Pol Mathieu oscillator, FitzHugh-Nagumo partial
     ```
 
 #### Duffing equation
+* Type this in terminal 
+    ```bash
+    $cd duffing
+    ```
 
 1. Generate data
     ```bash
@@ -48,9 +52,15 @@ We use Duffing equation, Van der Pol Mathieu oscillator, FitzHugh-Nagumo partial
     ```
 3. Evaluate models in
 
-   - [evaluate_duffing.ipynb](./examples/evaluate_duffing.ipynb)
+   - [evaluate_duffing.ipynb](./examples/duffing/evaluate_duffing.ipynb)
 
 #### Van der Pol Mathieu oscillator
+
+* Type this in terminal 
+    ```bash
+    $cd vdpm
+    ```
+
 
 1. Generate data
     ```bash
@@ -62,12 +72,17 @@ We use Duffing equation, Van der Pol Mathieu oscillator, FitzHugh-Nagumo partial
     ```
 3. Evaluate models in
 
-   - [evaluate_vdpm.ipynb](./examples/evaluate_vdpm.ipynb)
+   - [evaluate_vdpm.ipynb](./examples/duffing/evaluate_vdpm.ipynb)
 
 
 #### FitzHugh-Nagumo PDE
 
-* Input u is 1-dimensional
+* Type this in terminal 
+    ```bash
+    $cd fhn
+    ```
+
+##### Input u is 1-dimensional
 
 1. Generate data
     ```bash
@@ -79,9 +94,9 @@ We use Duffing equation, Van der Pol Mathieu oscillator, FitzHugh-Nagumo partial
     ```
 3. Evaluate models in
 
-   - [evaluate_fhn.ipynb](./examples/evaluate_fhn.ipynb)
+   - [evaluate_fhn.ipynb](./examples/fhn/evaluate_fhn.ipynb)
 
-* Input u is 3-dimensional
+##### Input u is 3-dimensional
 
 1. Generate data
     ```bash
@@ -93,9 +108,24 @@ We use Duffing equation, Van der Pol Mathieu oscillator, FitzHugh-Nagumo partial
     ```
 3. Evaluate models in
 
-   - [evaluate_fhn_high_dim_u.ipynb](./examples/evaluate_fhn_high_dim_u.ipynb)
+   - [evaluate_fhn_high_dim_u.ipynb](./examples/fhn/evaluate_fhn_high_dim_u.ipynb)
 
 
-### Korteweg-De Vries equation (Clearing in progress)
+#### Korteweg-De Vries equation
 
-See the files in [kdv experiments](./examples/kdv_experiments)
+* Type this in terminal 
+    ```bash
+    $cd kdv
+    ```
+
+1. Generate data
+    ```bash
+    $python generate_data_kdv.py config_kdv.json
+    ```
+2. Train models
+    ```bash
+    $python train_model_kdv.py config_kdv.json
+    ```
+3. Evaluate models in
+
+   - [evaluate_kdv_mass_momentum_pk_mpc.ipynb.ipynb](./examples/fhn/evaluate_kdv_mass_momentum_pk_mpc.ipynb)
