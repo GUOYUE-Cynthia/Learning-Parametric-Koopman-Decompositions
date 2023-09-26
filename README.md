@@ -1,5 +1,5 @@
 # Learning Parametric Koopman Decomposition
-The code of the experiments of Learning  Parametric Koopman Decomposition
+The code of the experiments of Learning  Parametric Koopman Decompositions.
 
 ## Installation
 
