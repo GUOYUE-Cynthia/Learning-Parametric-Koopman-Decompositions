@@ -1,12 +1,12 @@
 {"fhn_settings":
         {"data_settings": {
-            "data_path": "results/data_test",
+            "data_path": "fhn_results/data",
             "n_init":100,
             "traj_len": 500,
             "Nx":10
             },
         "nn_settings": {
-            "weights_path": "results/data_test",
+            "weights_path": "fhn_results/weights",
             "n_psi_train": 10,
             "dict_layer_size": [128,128],
             "K_layer_size": [4,4],

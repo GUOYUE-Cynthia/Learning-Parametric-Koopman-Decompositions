@@ -1,12 +1,12 @@
 {
     "data_settings": {
-        "data_path": "results/duffing_param/data",
+        "data_path": "duffing_results/data",
         "n_total_data": 10000,
         "n_traj_per_param": 100,
         "traj_len": 50
     },
     "nn_settings": {
-        "weights_path": "results/duffing_param/weights",
+        "weights_path": "duffing_results/weights",
         "n_psi_train": 22,
         "dict_layer_size": [100, 100, 100],
         "K_layer_size": [128, 256, 128],

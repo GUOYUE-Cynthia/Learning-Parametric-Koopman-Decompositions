@@ -1,13 +1,13 @@
 {
     "data_settings": {
-        "data_path": "results/data_test",
+        "data_path": "kdv_results/data",
         "n_init":100,
         "traj_len": 500,
         "Nx": 128,
         "forcing_type":"sin"
     },
     "nn_settings": {
-        "weights_path": "results/data_test",
+        "weights_path": "kdv_results/weights",
         "n_psi_train": 3,
         "dict_layer_size": [16,16],
         "K_layer_size": [36,36],
