@@ -7,11 +7,11 @@ This project uses `python 3.8`. Set up the project for development using the fol
 
 1. In your chosen folder, create a virtual environment
     ```bash
-    $python3 -m venv koopman_gpu
+    $python3 -m venv koopman_env
     ```
 2. Activate the environment
     ```bash
-    $source ~/.virtualenvs/koopman_gpu/bin/activate
+    $source ~/.virtualenvs/koopman_env/bin/activate
     ```
 3. Install requirements
     ```bash
