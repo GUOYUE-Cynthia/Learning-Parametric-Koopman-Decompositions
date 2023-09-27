@@ -16,7 +16,7 @@ data_path = config['data_settings']['data_path']
 weights_path = config['nn_settings']['weights_path']
 
 Nx = config['data_settings']['Nx']
-n_init = config['data_settings']['n_init']
+n_traj = config['data_settings']['n_traj']
 traj_len = config['data_settings']['traj_len']
 
 
@@ -44,23 +44,19 @@ dict_layer_size = config['nn_settings']['dict_layer_size']
 K_layer_size = config['nn_settings']['K_layer_size']
 
 pknn_epochs = config['nn_settings']['pknn_epochs']
-actK_epochs = config['nn_settings']['actK_epochs']
+polyK_epochs = config['nn_settings']['polyK_epochs']
 
 # Generate fhn equation
 x = np.linspace(-10,10,Nx)
 
 
 fhn_pde = ModifiedFHNTarget(
-            n_init=n_init,
-            traj_len=traj_len,
             x=x,
             dt=1e-5,
             t_step=1e-3,
             dim=target_dim,
             param_dim=param_dim,
-            param_input=1e3,
-            seed_z=1,
-            seed_param=123)
+            param_input=1e3)
 
 # Build model
 
@@ -105,28 +101,28 @@ history = model_pk.fit(x=[z_curr_normalized, z_next_normalized, data_u],
 
 model_pk.save_weights(os.path.join(weights_path, 'norm_high_u_psi_'+str(n_psi_train)+'_model_pk_fhn_Nx_'+str(Nx)+'.h5'))
 
-# Build Dl + actuated K
-dic_dl_actK = PsiNN(layer_sizes=dict_layer_size, n_psi_train=n_psi_train)
+# Build Dl + Polynomial K
+dic_dl_polyK = PsiNN(layer_sizes=dict_layer_size, n_psi_train=n_psi_train)
 
-solver_dl_actK = KoopmanActuatedDLSolver(dic=dic_dl_actK,
+solver_dl_polyK = KoopmanActuatedDLSolver(dic=dic_dl_polyK,
                                         target_dim=target_dim, 
                                         param_dim=param_dim,
                                         n_psi=n_psi,
                                         basis_u_func = fhn_pde.basis_u_func)
 
-model_dl_actK = solver_dl_actK.build_model()
+model_dl_polyK = solver_dl_polyK.build_model()
 
-solver_dl_actK.opt_nn_model(data_x=z_curr_normalized,
+solver_dl_polyK.opt_nn_model(data_x=z_curr_normalized,
                     data_u=data_u, 
                     data_y=z_next_normalized, 
                     zeros_data_y_train=zeros_data_z_next_train,
-                    epochs=actK_epochs,
+                    epochs=polyK_epochs,
                     batch_size=200,
                     lr=0.0001,
                     log_interval=20,
                     lr_decay_factor=0.1)
 
-solver_dl_actK.model.save_weights(os.path.join(weights_path,'norm_high_u_psi_'+str(n_psi_train)+'_model_dl_actK_fhn_Nx_'+str(Nx)+'.h5'))
+solver_dl_polyK.model.save_weights(os.path.join(weights_path,'norm_high_u_psi_'+str(n_psi_train)+'_model_dl_polyK_fhn_Nx_'+str(Nx)+'.h5'))
 
 
 

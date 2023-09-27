@@ -67,8 +67,8 @@ def compute_diff_ratio_one_traj(data_true_list, data_pred_list):
     ratio = sum_diff_norm_list / sum_data_true_norm_list
     return ratio
 
-def recover_prediction(target, scaler, solver):
-    z_curr_ori, data_u, z_next_ori = target.generate_data()
+def recover_prediction(target, scaler, solver, n_traj, traj_len, seed_z, seed_param):
+    z_curr_ori, data_u, z_next_ori = target.generate_data(n_traj, traj_len, seed_z, seed_param)
 
     z_curr_normalized = scaler.transform(z_curr_ori)
     z_next_normalized = scaler.transform(z_next_ori)
@@ -76,7 +76,7 @@ def recover_prediction(target, scaler, solver):
     z_init_normalized = tf.reshape(z_curr_normalized[0], shape=(1,-1))
     data_true = z_curr_normalized
 
-    data_pred_list = solver.compute_data_list(traj_len=target.traj_len, 
+    data_pred_list = solver.compute_data_list(traj_len=traj_len, 
                                              data_x_init=z_init_normalized, 
                                              data_u=data_u)
 

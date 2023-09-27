@@ -14,7 +14,7 @@ with open(config_file, 'r') as f:
 data_path = config['data_settings']['data_path']
 
 Nx = config['data_settings']['Nx']
-n_init = config['data_settings']['n_init']
+n_traj = config['data_settings']['n_traj']
 traj_len = config['data_settings']['traj_len']
 
 x = np.linspace(-10,10,Nx)
@@ -25,18 +25,17 @@ param_dim = 3
 from koopmanlib.target import ModifiedFHNTarget
 
 fhn_pde = ModifiedFHNTarget(
-            n_init=n_init,
-            traj_len=traj_len,
             x=x,
             dt=1e-5,
             t_step=1e-3,
             dim=target_dim,
             param_dim=param_dim,
-            param_input=1e3,
-            seed_z=1,
-            seed_param=123)
+            param_input=1e3)
 
-data_z_curr, data_u, data_z_next = fhn_pde.generate_data()
+data_z_curr, data_u, data_z_next = fhn_pde.generate_data(n_traj=n_traj,
+                                                         traj_len=traj_len,
+                                                         seed_z=1,
+                                                         seed_param=123)
 
 data_dict = {'data_z_curr': data_z_curr,
               'data_u': data_u,

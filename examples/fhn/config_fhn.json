@@ -1,7 +1,7 @@
 {"fhn_settings":
         {"data_settings": {
             "data_path": "fhn_results/data",
-            "n_init":100,
+            "n_traj":100,
             "traj_len": 500,
             "Nx":10
             },
@@ -10,24 +10,24 @@
             "n_psi_train": 10,
             "dict_layer_size": [128,128],
             "K_layer_size": [4,4],
-            "actK_epochs": 150,
+            "polyK_epochs": 500,
             "pknn_epochs": 500
         }
         },
 "fhn_high_dim_u_settings":
         {"data_settings": {
-            "data_path": "results/data_test",
-            "n_init":100,
+            "data_path": "fhn_results/data",
+            "n_traj":100,
             "traj_len": 500,
             "Nx":10
             },
             "nn_settings": {
-                "weights_path": "results/data_test",
-                "n_psi_train": 10,
-                "dict_layer_size": [128,128],
-                "K_layer_size": [16,16],
-                "actK_epochs": 150,
-                "pknn_epochs": 500
+            "weights_path": "fhn_results/weights",
+            "n_psi_train": 10,
+            "dict_layer_size": [128,128],
+            "K_layer_size": [16,16],
+            "polyK_epochs": 500,
+            "pknn_epochs": 500
             }
         }
 }

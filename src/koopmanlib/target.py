@@ -315,8 +315,8 @@ class DuffingParamTarget(AbstractParamODETarget):
                     1, 0, 2]), shape=(
                 traj_len, self.dim))
         
-        repeats_constant_extend_trajlen = traj_len * tf.ones(shape=(n_traj_per_param,), dtype='int32')
-        param = tf.repeat(param, repeats=repeats_constant_extend_trajlen, axis=0)
+        repeats_constant_extend_traj_len = traj_len * tf.ones(shape=(n_traj_per_param,), dtype='int32')
+        param = tf.repeat(param, repeats=repeats_constant_extend_traj_len, axis=0)
         
         return np.asarray(data_x), np.asarray(param)
 
