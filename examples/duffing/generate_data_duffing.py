@@ -20,6 +20,9 @@ n_traj_per_param = config['data_settings']['n_traj_per_param']
 # Number of the points on each trajectory
 traj_len = config['data_settings']['traj_len']
 
+seed_x = config['data_settings']['seed_x']
+seed_param = config['data_settings']['seed_param']
+
 
 n_param = int(n_total_data / n_traj_per_param) # Number of choices of parameters
 
@@ -27,16 +30,17 @@ n_param = int(n_total_data / n_traj_per_param) # Number of choices of parameters
 print('n_traj_per_param', n_traj_per_param)
 print('n_param', n_param)
 
-duffing_param = DuffingParamTarget(n_init=n_param,
-                                   n_traj_per_param=n_traj_per_param, 
-                                   traj_len=traj_len, 
-                                   seed_x=123, 
-                                   seed_param=[1,2,3])
+duffing_param = DuffingParamTarget(dim=2, param_dim=3)
 
-data_x, data_u = duffing_param.generate_init_data()
+data_x, data_u = duffing_param.generate_init_data(n_param=n_param,
+                                                  traj_len=traj_len,
+                                                  n_traj_per_param=n_traj_per_param,
+                                                  seed_x=seed_x,
+                                                  seed_param=seed_param)
+
 data_y = duffing_param.generate_next_data(data_x, data_u)
 
-position = traj_len*n_traj_per_param * np.arange(0,n_param+1)
+position = traj_len * n_traj_per_param * np.arange(0,n_param+1)
 
 data_u_sep = [data_u[start:end] for start, end in zip(position[:-1], position[1:])]
 data_u_sep = np.asarray(data_u_sep)

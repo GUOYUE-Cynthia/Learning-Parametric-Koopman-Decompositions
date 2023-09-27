@@ -2,8 +2,10 @@
     "data_settings": {
         "data_path": "duffing_results/data",
         "n_total_data": 10000,
-        "n_traj_per_param": 100,
-        "traj_len": 50
+        "n_traj_per_param": 1000,
+        "traj_len": 50,
+        "seed_x":123,
+        "seed_param": [1,2,3]
     },
     "nn_settings": {
         "weights_path": "duffing_results/weights",

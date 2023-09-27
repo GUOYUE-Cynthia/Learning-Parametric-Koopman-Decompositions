@@ -9,42 +9,35 @@ from scipy.fftpack import diff as psdiff
 class AbstractODETarget(object):
     def __init__(
             self,
-            n_init,
-            traj_len,
             dt=1e-3,
             t_step=0.25,
-            dim=2,
-            seed=None):
-        self.n_init = n_init
-        self.traj_len = traj_len
-        self.n_data = n_init * traj_len
+            dim=2):
         self.dim = dim
         self.dt = dt
         self.t_step = t_step
         self.n_step = int(t_step / dt)
-        self.seed = seed
 
-    def generate_init_data(self):
+    def generate_init_data(self, n_traj, traj_len, seed=None):
         data_x = []
-        if self.seed is not None:
-            np.random.seed(self.seed)
+        if seed is not None:
+            np.random.seed(seed)
             
         
         x0 = np.random.uniform(
             size=(
-                self.n_init,
+                n_traj,
                 self.dim),
             low=self.x_min,
             high=self.x_max)
 
         data_x.append(x0)
-        for t in range(self.traj_len - 1):
+        for t in range(traj_len - 1):
             data_x.append(self.euler(data_x[t]))
         data_x = tf.reshape(
             tf.transpose(
                 tf.convert_to_tensor(data_x), [
                     1, 0, 2]), shape=(
-                self.n_init * self.traj_len, self.dim))
+                n_traj * traj_len, self.dim))
         return np.asarray(data_x)
 
     def generate_next_data(self, data_x):
@@ -78,12 +71,9 @@ class DuffingOscillator(AbstractODETarget):
 
     def __init__(
             self,
-            n_init,
-            traj_len,
             dt=1e-3,
             t_step=0.25,
             dim=2,
-            seed=None,
             delta=0.5,
             alpha=1.0,
             beta=-1.0
@@ -91,12 +81,9 @@ class DuffingOscillator(AbstractODETarget):
         super(
             DuffingOscillator,
             self).__init__(
-            n_init,
-            traj_len,
             dt,
             t_step,
-            dim,
-            seed)
+            dim)
         self.delta = delta
         self.alpha = alpha
         self.beta = beta
@@ -119,22 +106,16 @@ class VanderPolOscillator(AbstractODETarget):
 
     def __init__(
             self,
-            n_init,
-            traj_len,
             dt=1e-3,
             t_step=0.1,
             dim=2,
-            seed=None,
             alpha=2.0):
         super(
             VanderPolOscillator,
             self).__init__(
-            n_init,
-            traj_len,
             dt,
             t_step,
-            dim,
-            seed)
+            dim)
         self.alpha = alpha
         self.x_min = -5
         self.x_max = 5
@@ -149,22 +130,15 @@ class VanderPolOscillator(AbstractODETarget):
 
 class AbstractParamODETarget(AbstractODETarget):
     def __init__(self,
-            n_init,
-            traj_len,
             dt=1e-3,
             t_step=0.1,
             dim=2,
-            param_dim=2,
-            seed_x=None,
-            seed_param=None):
-        super(AbstractParamODETarget, self).__init__(n_init,
-            traj_len,
+            param_dim=2):
+        super(AbstractParamODETarget, self).__init__(
             dt,
             t_step,
             dim)
         self.param_dim = param_dim
-        self.seed_x = seed_x
-        self.seed_param = seed_param
         
     def euler(self, x, param):
         """ODE Solver
@@ -178,50 +152,50 @@ class AbstractParamODETarget(AbstractODETarget):
             x = x + self.dt * self.rhs(x, param)
         return x
 
-    def generate_init_data(self):
+    def generate_init_data(self, n_traj, traj_len, seed_x, seed_param):
         data_x = []
-        if self.seed_x is not None:
-            np.random.seed(self.seed_x)
+        if seed_x is not None:
+            np.random.seed(seed_x)
             x0 = np.random.uniform(
                 size=(
-                    self.n_init,
+                    n_traj,
                     self.dim),
                 low=self.x_min,
                 high=self.x_max)
         else:
             x0 = np.random.uniform(
                 size=(
-                    self.n_init,
+                    n_traj,
                     self.dim),
                 low=self.x_min,
                 high=self.x_max)
             
-        if self.seed_param is not None:
-            np.random.seed(self.seed_param)
+        if seed_param is not None:
+            np.random.seed(seed_param)
             param = np.random.uniform(
                 size=(
-                    self.n_init,
+                    n_traj,
                     self.param_dim),
                 low=self.param_min,
                 high=self.param_max)
         else:
             param = np.random.uniform(
                 size=(
-                    self.n_init,
+                    n_traj,
                     self.param_dim),
                 low=self.param_min,
                 high=self.param_max)
 
         data_x.append(x0)
-        for t in range(self.traj_len - 1):
+        for t in range(traj_len - 1):
             data_x.append(self.euler(data_x[t], param))
         data_x = tf.reshape(
             tf.transpose(
                 tf.convert_to_tensor(data_x), [
                     1, 0, 2]), shape=(
-                self.n_init * self.traj_len, self.dim))
+                n_traj * traj_len, self.dim))
         
-        repeats_constant = self.traj_len * tf.ones(shape=(self.n_init,), dtype='int32')
+        repeats_constant = traj_len * tf.ones(shape=(n_traj,), dtype='int32')
         param = tf.repeat(param, repeats=repeats_constant, axis=0)
         
         return np.asarray(data_x), np.asarray(param)
@@ -233,23 +207,15 @@ class AbstractParamODETarget(AbstractODETarget):
 
 class DuffingParamTarget(AbstractParamODETarget):
     def __init__(self,
-            n_init,
-            n_traj_per_param,
-            traj_len,
             dt=1e-3,
             t_step=0.25,
             dim=2,
-            param_dim=3,
-            seed_x=None,
-            seed_param=None):
-        super(DuffingParamTarget, self).__init__(n_init,
-            traj_len,
+            param_dim=3):
+        super(DuffingParamTarget, self).__init__(
             dt,
             t_step,
             dim,
-            param_dim,
-            seed_x,
-            seed_param)
+            param_dim)
         self.x_min = -2
         self.x_max = 2
         self.delta_min = 0
@@ -258,7 +224,6 @@ class DuffingParamTarget(AbstractParamODETarget):
         self.alpha_max = 2
         self.beta_min = -2
         self.beta_max = 2
-        self.n_traj_per_param = n_traj_per_param
         
     def rhs(self, data_x, param):
         x1 = tf.reshape(data_x[:, 0], shape=(data_x.shape[0], 1))
@@ -270,87 +235,87 @@ class DuffingParamTarget(AbstractParamODETarget):
         f2 = -delta * x2 - x1 * (beta + alpha * x1**2)
         return tf.concat([f1, f2], axis=-1)
 
-    def generate_init_data(self):
+    def generate_init_data(self, n_param, traj_len, n_traj_per_param, seed_x=123, seed_param=[1,2,3]):
         data_x = []
-        if self.seed_x is not None:
-            np.random.seed(self.seed_x)
+        if seed_x is not None:
+            np.random.seed(seed_x)
         x0 = np.random.uniform(
             size=(
-                self.n_init * self.n_traj_per_param,
+                n_param * n_traj_per_param,
                 self.dim),
             low=self.x_min,
             high=self.x_max)
             
-        if self.seed_param is not None:
-            np.random.seed(self.seed_param[0])
+        if seed_param is not None:
+            np.random.seed(seed_param[0])
 
         delta = np.random.uniform(
             size=(
-                self.n_init,
+                n_param,
                 1),
             low=self.delta_min,
             high=self.delta_max)
 
-        if self.seed_param is not None:
-            np.random.seed(self.seed_param[1])
+        if seed_param is not None:
+            np.random.seed(seed_param[1])
         
         alpha = np.random.uniform(
             size=(
-                self.n_init,
+                n_param,
                 1),
             low=self.alpha_min,
             high=self.alpha_max)
 
-        if self.seed_param is not None:
-            np.random.seed(self.seed_param[2])
+        if seed_param is not None:
+            np.random.seed(seed_param[2])
 
         beta = np.random.uniform(
             size=(
-                self.n_init,
+                n_param,
                 1),
             low=self.beta_min,
             high=self.beta_max)
         param = np.concatenate((delta, alpha, beta), axis=-1)
-        repeats_constant_extend_n_traj = self.n_traj_per_param * tf.ones(shape=(self.n_init,), dtype='int32')
+        repeats_constant_extend_n_traj = n_traj_per_param * tf.ones(shape=(n_param,), dtype='int32')
         param = tf.repeat(param, repeats=repeats_constant_extend_n_traj, axis=0)
 
         data_x.append(x0)
-        for t in range(self.traj_len - 1):
+        for t in range(traj_len - 1):
             data_x.append(self.euler(data_x[t], param))
         data_x = tf.reshape(
             tf.transpose(
                 tf.convert_to_tensor(data_x), [
                     1, 0, 2]), shape=(
-                self.n_init * self.traj_len * self.n_traj_per_param, self.dim))
+                n_param * traj_len * n_traj_per_param, self.dim))
         
-        repeats_constant_extend_trajlen = self.traj_len * tf.ones(shape=(self.n_init * self.n_traj_per_param,), dtype='int32')
+        repeats_constant_extend_trajlen = traj_len * tf.ones(shape=(n_param * n_traj_per_param,), dtype='int32')
         param = tf.repeat(param, repeats=repeats_constant_extend_trajlen, axis=0)
         
         return np.asarray(data_x), np.asarray(param)
 
-    def generate_fix_param_init_data(self, fixed_x0, fixed_param):
+    def generate_fix_param_init_data(self, traj_len, n_traj_per_param, fixed_x0, fixed_param):
         data_x = [] 
         
-        x0 = fixed_x0.reshape(self.n_init * self.n_traj_per_param, self.dim)
+        x0 = fixed_x0.reshape(n_traj_per_param, self.dim)
         
-        delta = fixed_param[0] * np.ones(shape=(self.n_init,1))
-        alpha = fixed_param[1] * np.ones(shape=(self.n_init,1))
-        beta = fixed_param[2] * np.ones(shape=(self.n_init,1))
+        delta = fixed_param[0] * np.ones(shape=(1,1))
+        alpha = fixed_param[1] * np.ones(shape=(1,1))
+        beta = fixed_param[2] * np.ones(shape=(1,1))
 
         param = np.concatenate((delta, alpha, beta), axis=-1)
-        repeats_constant_extend_n_traj = self.n_traj_per_param * tf.ones(shape=(self.n_init,), dtype='int32')
+        repeats_constant_extend_n_traj = n_traj_per_param * tf.ones(shape=(1,), dtype='int32')
         param = tf.repeat(param, repeats=repeats_constant_extend_n_traj, axis=0)
 
         data_x.append(x0)
-        for t in range(self.traj_len - 1):
+        for t in range(traj_len - 1):
             data_x.append(self.euler(data_x[t], param))
         data_x = tf.reshape(
             tf.transpose(
                 tf.convert_to_tensor(data_x), [
                     1, 0, 2]), shape=(
-                self.n_init * self.traj_len, self.dim))
+                traj_len, self.dim))
         
-        repeats_constant_extend_trajlen = self.traj_len * tf.ones(shape=(self.n_init * self.n_traj_per_param,), dtype='int32')
+        repeats_constant_extend_trajlen = traj_len * tf.ones(shape=(n_traj_per_param,), dtype='int32')
         param = tf.repeat(param, repeats=repeats_constant_extend_trajlen, axis=0)
         
         return np.asarray(data_x), np.asarray(param)
@@ -359,8 +324,6 @@ class DuffingParamTarget(AbstractParamODETarget):
 class VanderPolMathieuTarget(AbstractParamODETarget):
     def __init__(self,
             mu,
-            n_init,
-            traj_len,
             dt=1e-3,
             t_step=1e-2,
             dim=2,
@@ -369,17 +332,12 @@ class VanderPolMathieuTarget(AbstractParamODETarget):
             k2=2,
             k3=2,
             k4=1,
-            w0=1,
-            seed_x=None,
-            seed_param=None):
-        super(VanderPolMathieuTarget, self).__init__(n_init,
-            traj_len,
+            w0=1):
+        super(VanderPolMathieuTarget, self).__init__(
             dt,
             t_step,
             dim,
-            param_dim,
-            seed_x,
-            seed_param)
+            param_dim)
         self.x_min = -1
         self.x_max = 1
         self.u_min = -1
@@ -403,30 +361,30 @@ class VanderPolMathieuTarget(AbstractParamODETarget):
         # f2 = -1.0*x1 + 2.0*x2 - 2.0*(x1**2)*x2 - self.mu * (param**2) * x1 + 1.0*param
         return tf.concat([f1, f2], axis=-1)
 
-    def generate_init_data(self):
+    def generate_init_data(self, n_traj, traj_len, seed_x, seed_param):
         data_x = []
 
-        if self.seed_x is not None:
-            np.random.seed(self.seed_x)
+        if seed_x is not None:
+            np.random.seed(seed_x)
         x0 = np.random.uniform(
             size=(
-                self.n_init,
+                n_traj,
                 self.dim),
             low=self.x_min,
             high=self.x_max)
             
-        if self.seed_param is not None:
-            np.random.seed(self.seed_param)
+        if seed_param is not None:
+            np.random.seed(seed_param)
         param = np.random.uniform(
             size=(
-                self.traj_len,
-                self.n_init,
+                traj_len,
+                n_traj,
                 self.param_dim),
             low=self.u_min,
             high=self.u_max)
 
         data_x.append(x0)
-        for t in range(self.traj_len - 1):
+        for t in range(traj_len - 1):
             x_next = self.euler(data_x[-1], param[t])
             # print('param', param[t])
             data_x.append(x_next)
@@ -439,8 +397,6 @@ class VanderPolMathieuTarget(AbstractParamODETarget):
 
 class FitzHughNagumoTarget(AbstractParamODETarget):
     def __init__(self,
-            n_init,
-            traj_len,
             x,
             dt=1e-3,
             t_step=1e-2,
@@ -450,18 +406,12 @@ class FitzHughNagumoTarget(AbstractParamODETarget):
             epsilon=0.03,
             a0=-0.03,
             a1=2.0,
-            param_input=1e3,
-            seed_z=None,
-            seed_x=None,
-            seed_param=None):
-        super(FitzHughNagumoTarget, self).__init__(n_init,
-            traj_len,
+            param_input=1e3):
+        super(FitzHughNagumoTarget, self).__init__(
             dt,
             t_step,
             dim,
-            param_dim,
-            seed_x,
-            seed_param)
+            param_dim)
         self.u_min = -1
         self.u_max = 1
         self.delta = delta
@@ -471,8 +421,6 @@ class FitzHughNagumoTarget(AbstractParamODETarget):
         self.Nx = int(dim /2)
         self.x = x
         self.x_step = np.diff(self.x, n=1)[0]
-        self.seed_z = seed_z
-        self.seed_param = seed_param
         self.param_input = param_input
                 
     def rhs(self, data_z, param):
@@ -495,17 +443,17 @@ class FitzHughNagumoTarget(AbstractParamODETarget):
 
         return np.concatenate((dvdt,dwdt), axis=-1)
 
-    def generate_data(self):
+    def generate_data(self, n_traj, traj_len, seed_z, seed_param):
         data_z = []
 
         # Set random z0
-        if self.seed_z is not None:
-            np.random.seed(self.seed_z)
+        if seed_z is not None:
+            np.random.seed(seed_z)
 
         ab_list = np.random.randint(
             low=1, 
             high=20,
-            size=(self.n_init,2,1))
+            size=(n_traj,2,1))
         
         a_list = ab_list[:,0,:]
         b_list = ab_list[:,1,:]
@@ -523,20 +471,20 @@ class FitzHughNagumoTarget(AbstractParamODETarget):
         # v0 = np.sin((np.pi/10) * self.x + np.pi/2).reshape(1,-1)
         # w0 = np.cos((np.pi/10) * self.x).reshape(1,-1)
         # z0 = np.concatenate((v0,w0), axis=-1)
-        # z0 = np.repeat(z0, repeats=(self.n_init),axis=0)
+        # z0 = np.repeat(z0, repeats=(n_traj),axis=0)
             
-        if self.seed_param is not None:
-            np.random.seed(self.seed_param)
+        if seed_param is not None:
+            np.random.seed(seed_param)
         param = np.random.uniform(
             size=(
-                self.traj_len,
-                self.n_init,
+                traj_len,
+                n_traj,
                 self.param_dim),
             low=self.u_min,
             high=self.u_max)
 
         data_z.append(z0)
-        for t in range(self.traj_len - 1):
+        for t in range(traj_len - 1):
             z_next = self.euler(data_z[-1],
                                 param[t])
             # print('z', data_z[-1])
@@ -546,9 +494,9 @@ class FitzHughNagumoTarget(AbstractParamODETarget):
         data_z = tf.reshape(tf.convert_to_tensor(data_z), (-1, self.dim))
         param = tf.reshape(tf.convert_to_tensor(param), (-1, self.param_dim))
 
-        data_z_curr = data_z[:-self.n_init, :]
-        data_z_next = data_z[self.n_init:, :]
-        param_output = param[:-self.n_init, :]
+        data_z_curr = data_z[:-n_traj, :]
+        data_z_next = data_z[n_traj:, :]
+        param_output = param[:-n_traj, :]
 
         return np.asarray(data_z_curr), np.asarray(param_output), np.asarray(data_z_next)
     
@@ -559,8 +507,6 @@ class FitzHughNagumoTarget(AbstractParamODETarget):
     
 class ModifiedFHNTarget(FitzHughNagumoTarget):
     def __init__(self,
-            n_init,
-            traj_len,
             x,
             dt=1e-3,
             t_step=1e-2,
@@ -570,12 +516,8 @@ class ModifiedFHNTarget(FitzHughNagumoTarget):
             epsilon=0.03,
             a0=-0.03,
             a1=2.0,
-            param_input=1e3,
-            seed_z=None,
-            seed_x=None,
-            seed_param=None):
-        super(ModifiedFHNTarget, self).__init__(n_init,
-            traj_len,
+            param_input=1e3):
+        super(ModifiedFHNTarget, self).__init__(
             x,
             dt,
             t_step,
@@ -585,10 +527,7 @@ class ModifiedFHNTarget(FitzHughNagumoTarget):
             epsilon,
             a0,
             a1,
-            param_input,
-            seed_z,
-            seed_x,
-            seed_param)
+            param_input)
 
     def rhs(self, data_z, data_u):
         v = data_z[:, :self.Nx].reshape(data_z.shape[0], self.Nx)
@@ -619,7 +558,7 @@ class ModifiedFHNTarget(FitzHughNagumoTarget):
         # Define the degree of the polynomial features
         # data_u shape: (traj_len, param_dim) = (traj_len, 3)
         # output shape: (traj_len, 19)
-        # Usually, n_init = 1
+        # Usually, n_traj = 1
 
         u1 = tf.reshape(data_u[:,0],(-1,1))
         u2 = tf.reshape(data_u[:,1],(-1,1))
@@ -638,8 +577,6 @@ class ModifiedFHNTarget(FitzHughNagumoTarget):
 
 class KortewegDeVriesTarget(AbstractParamODETarget):
     def __init__(self,
-            n_init,
-            traj_len,
             x,
             dt=1e-3,
             t_step=1e-2,
@@ -647,24 +584,18 @@ class KortewegDeVriesTarget(AbstractParamODETarget):
             param_dim=3,
             forcing_type='sin',
             v_list=None,
-            L=2*np.pi,
-            seed_x=None,
-            seed_param=None):
-        super(KortewegDeVriesTarget, self).__init__(n_init,
-            traj_len,
+            L=2*np.pi):
+        super(KortewegDeVriesTarget, self).__init__(
             dt,
             t_step,
             dim,
-            param_dim,
-            seed_x,
-            seed_param)
+            param_dim)
         self.u_min = -1
         self.u_max = 1
         self.x = x
         self.x_step = np.diff(self.x, n=1)[0]
         self.v_list = v_list
         self.L = L
-        self.seed_param = seed_param
         self.forcing_type = forcing_type
                 
     def kdv_ode(self, t, y, param):
@@ -756,4 +687,38 @@ class KortewegDeVriesTarget(AbstractParamODETarget):
         
         IC = b0*IC0 + b1*IC1 + b2*IC2
         return IC
-        
+    
+    def generate_data(self, n_traj, traj_len, seed_y0, seed_param):
+        np.random.seed(seed_y0)
+        seed_IC = np.random.randint(0,100,size=(n_traj,))
+
+        y0_list = []
+        for seed in seed_IC:
+            y0 = self.generate_y0(seed)
+            y0_list.append(y0)
+        y0_list = np.asarray(y0_list)
+
+        np.random.seed(seed_param)
+        param_list_group = np.random.uniform(low=0, high=1, size=(n_traj, traj_len, self.param_dim)) * (self.umax - self.umin) + self.umin
+
+        soln_outer_list = []
+        for y0, param_list in zip(y0_list, param_list_group):
+            # Calculate inner solution for each y0 and param_list (for one trajectory)
+            soln_inner_list = [y0]
+            for param in param_list:
+                soln = self.kdv_solution(y0, self.t_step, param)
+                y0 = soln.y.T[-1]
+                soln_inner_list.append(y0)
+
+            soln_inner_list = np.asarray(soln_inner_list)
+            
+            soln_outer_list.append(soln_inner_list)
+            
+        soln_outer_list = np.asarray(soln_outer_list)
+
+        data_x = soln_outer_list[:,:-1,:].reshape(-1, self.dim)
+        data_y = soln_outer_list[:,1:,:].reshape(-1, self.dim)
+        data_u = param_list_group.reshape(-1,self.param_dim)
+
+        return data_x, data_y, data_u
+                

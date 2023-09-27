@@ -7,7 +7,6 @@ import os
 
 import numpy as np
 import tensorflow as tf
-import matplotlib.pyplot as plt
 
 from koopmanlib.dictionary import PsiNN
 from koopmanlib.target import DuffingParamTarget
@@ -76,7 +75,6 @@ for i in range (data_x_sep.shape[0]):
                 log_interval=20,
                 lr_decay_factor=0.8)
 
-    # solver.model.save_weights('results/duffing_param/weights/edmd_duffing_weights_data_'+str(i)+'_n_traj_per_param_'+str(n_traj_per_param)+'_n_param_'+str(n_param)+'.h5')
     solver.model.save_weights(os.path.join(weights_path,'edmd_duffing_weights_data_'+str(i)+'_n_traj_per_param_'+str(n_traj_per_param)+'_n_param_'+str(n_param)+'.h5'))
 
 # Train PK-NN
@@ -98,7 +96,7 @@ pknn_epochs = config['nn_settings']['pknn_epochs']
 
 
 # model_pk, model_K_u_pred_pk = solver_pk.generate_model(layer_sizes=[128, 256, 128])
-model_pk, model_K_u_pred_pk = solver_pk.generate_model(layer_sizes=[256,256,256])
+model_pk, model_K_u_pred_pk = solver_pk.generate_model(layer_sizes=K_layer_size)
 
 zeros_data_y_train = tf.zeros_like(dic_pk(data_y))
 
