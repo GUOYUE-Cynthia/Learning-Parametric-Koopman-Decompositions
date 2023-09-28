@@ -590,8 +590,8 @@ class KortewegDeVriesTarget(AbstractParamODETarget):
             t_step,
             dim,
             param_dim)
-        self.u_min = -1
-        self.u_max = 1
+        self.umin = -1
+        self.umax = 1
         self.x = x
         self.x_step = np.diff(self.x, n=1)[0]
         self.v_list = v_list

@@ -10,7 +10,7 @@ import json
 from tensorflow.keras.optimizers import Adam
 
 
-from koopmanlib.dictionary import PsiNN, PsiNN_obs
+from koopmanlib.dictionary import PsiNN_obs
 from koopmanlib.param_solver import KoopmanParametricDLSolver, KoopmanLinearDLSolver, KoopmanBilinearDLSolver
 
 config_file = sys.argv[1]

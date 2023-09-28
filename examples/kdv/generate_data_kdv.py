@@ -14,7 +14,7 @@ with open(config_file, 'r') as f:
 data_path = config['data_settings']['data_path']
 
 Nx = config['data_settings']['Nx']
-n_init = config['data_settings']['n_init']
+n_traj = config['data_settings']['n_traj']
 traj_len = config['data_settings']['traj_len']
 forcing_type = config['data_settings']['forcing_type']
 
@@ -48,8 +48,7 @@ umin = -umax
 target_dim = Nx
 param_dim = 3
 
-kdv = KortewegDeVriesTarget(n_init=n_init,
-            traj_len=traj_len,
+kdv = KortewegDeVriesTarget(
             x=x,
             t_step=T,
             dim=Nx,
@@ -58,35 +57,10 @@ kdv = KortewegDeVriesTarget(n_init=n_init,
             v_list=v_list,
             L=L)
 
-np.random.seed(123)
-seed_IC = np.random.randint(0,100,size=(n_init,))
-
-y0_list = []
-for seed in seed_IC:
-    y0 = kdv.generate_y0(seed)
-    y0_list.append(y0)
-y0_list = np.asarray(y0_list)
-
-param_list_group = np.random.uniform(low=0, high=1, size=(n_init, traj_len, param_dim)) * (umax - umin) + umin
-
-soln_outer_list = []
-for y0, param_list in zip(y0_list, param_list_group):
-    # Calculate inner solution for each y0 and param_list (for one trajectory)
-    soln_inner_list = [y0]
-    for param in param_list:
-        soln = kdv.kdv_solution(y0, T, param)
-        y0 = soln.y.T[-1]
-        soln_inner_list.append(y0)
-
-    soln_inner_list = np.asarray(soln_inner_list)
-    
-    soln_outer_list.append(soln_inner_list)
-    
-soln_outer_list = np.asarray(soln_outer_list)
-
-data_x = soln_outer_list[:,:-1,:].reshape(-1, target_dim)
-data_y = soln_outer_list[:,1:,:].reshape(-1, target_dim)
-data_u = param_list_group.reshape(-1,param_dim)
+data_x, data_y, data_u = kdv.generate_data(n_traj=n_traj,
+                                       traj_len=traj_len, 
+                                       seed_y0=123,
+                                       seed_param=1)
 
 data_dict = {'data_x': data_x,
              'data_y': data_y,
