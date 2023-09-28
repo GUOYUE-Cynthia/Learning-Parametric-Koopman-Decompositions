@@ -112,19 +112,19 @@ lr_callbacks = tf.keras.callbacks.ReduceLROnPlateau(monitor='loss',
                                                     cooldown=0,
                                                     min_lr=1e-12)
 
-es_callbacks = tf.keras.callbacks.EarlyStopping(monitor='loss',
-                                                min_delta=0,
-                                                patience=20,
-                                                verbose=0,
-                                                mode='min',
-                                                baseline=1e-7)
+# es_callbacks = tf.keras.callbacks.EarlyStopping(monitor='loss',
+#                                                 min_delta=0,
+#                                                 patience=20,
+#                                                 verbose=0,
+#                                                 mode='min',
+#                                                 baseline=1e-7)
 
 history = model_pk.fit(x=[data_x, data_y, data_u], 
                     y=zeros_data_y_train, 
                     epochs=pknn_epochs, 
                     batch_size=200,
-                    callbacks=[lr_callbacks,es_callbacks],
-#                    callbacks=[lr_callbacks],
+                    # callbacks=[lr_callbacks,es_callbacks],
+                   callbacks=[lr_callbacks],
                     verbose=1)
 
 model_pk.save_weights(os.path.join(weights_path,'pk_duffing_weights_data_'+str(n_traj_per_param)+'_n_param_'+str(n_param)+'.h5'))
