@@ -1,4 +1,11 @@
 .DS_Store
 examples/.ipynb_checkpoints
 examples/.DS_Store
-examples
+examples/duffing/.ipynb_checkpoints
+examples/duffing/duffing_results
+examples.fhn/.ipynb_checkpoints
+examples/fhn/fhn_results
+examples/vdpm/.ipynb_checkpoints
+examples/vdpm/vdpm_results
+examples/kdv/.ipynb_checkpoints
+examples/kdv/kdv_results
