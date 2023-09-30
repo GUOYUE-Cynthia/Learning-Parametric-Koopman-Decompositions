@@ -639,7 +639,6 @@ class KortewegDeVriesTarget(AbstractParamODETarget):
 
         for y0_pred, param_pred in zip(y0_pred_list, param_pred_list):
 
-            
             # Compute exact solution
             kdv_soln_pred = compute_kdv_soln_func(y0_pred, param_list=param_pred)
             kdv_soln_pred = np.asarray(kdv_soln_pred)
