@@ -13,6 +13,8 @@ This project uses `python 3.8`. Set up the project for development using the fol
     ```bash
     $source ~/.virtualenvs/koopman_env/bin/activate
     ```
+    Ensure the environment is located in the folder __*/.virtualenvs*__. If not, first confirm the path of the environment and adjust it accordingly.
+
 3. Install requirements
     ```bash
     $pip install -r requirements.txt
@@ -28,19 +30,17 @@ This project uses `python 3.8`. Set up the project for development using the fol
 
 ## Quickstart
 
-We use Duffing equation, Van der Pol Mathieu oscillator, FitzHugh-Nagumo partial differential equation and Korteweg-De Vries equation as examples to show how to use this package.
+We use Duffing equation, Van der Pol Mathieu oscillator, FitzHugh-Nagumo partial differential equation and Korteweg-De Vries equation as examples to show how to use this package. Please enter the following commands in the terminal.
 
 ### Enter [examples](./examples)
-* Type this in terminal 
-    ```bash
-    $cd examples
-    ```
+```bash
+$cd examples
+```
 
 #### Duffing equation
-* Type this in terminal 
-    ```bash
-    $cd duffing
-    ```
+```bash
+$cd duffing
+```
 
 1. Generate data
     ```bash
@@ -56,10 +56,9 @@ We use Duffing equation, Van der Pol Mathieu oscillator, FitzHugh-Nagumo partial
 
 #### Van der Pol Mathieu oscillator
 
-* Type this in terminal 
-    ```bash
-    $cd vdpm
-    ```
+```bash
+$cd vdpm
+```
 
 
 1. Generate data
@@ -77,10 +76,9 @@ We use Duffing equation, Van der Pol Mathieu oscillator, FitzHugh-Nagumo partial
 
 #### FitzHugh-Nagumo PDE
 
-* Type this in terminal 
-    ```bash
-    $cd fhn
-    ```
+```bash
+$cd fhn
+```
 
 ##### Input u is 1-dimensional
 
@@ -113,10 +111,9 @@ We use Duffing equation, Van der Pol Mathieu oscillator, FitzHugh-Nagumo partial
 
 #### Korteweg-De Vries equation
 
-* Type this in terminal 
-    ```bash
-    $cd kdv
-    ```
+```bash
+$cd kdv
+```
 
 1. Generate data
     ```bash
@@ -129,3 +126,14 @@ We use Duffing equation, Van der Pol Mathieu oscillator, FitzHugh-Nagumo partial
 3. Evaluate models in
 
    - [evaluate_kdv_mass_momentum_pk_mpc.ipynb.ipynb](./examples/fhn/evaluate_kdv_mass_momentum_pk_mpc.ipynb)
+
+## Reproduce the results
+Download the training data and the trained weights through this [link](https://www.dropbox.com/scl/fi/91an423jmdy7n918y60l8/PKNN_results.zip?rlkey=xfzl33dr3xbbamu2czxifd0ho&dl=1
+)
+or run 
+
+```bash
+$curl -L -o PKNN_results.zip 'https://www.dropbox.com/scl/fi/91an423jmdy7n918y60l8/PKNN_results.zip?rlkey=xfzl33dr3xbbamu2czxifd0ho&dl=1'
+```
+
+Please assign the experiment results to their respective folders.
