@@ -1,5 +1,6 @@
 **/.DS_Store
 **/.ipynb_checkpoints
+**/__pycache__
 examples/duffing/duffing_results
 examples/fhn/fhn_results
 examples/vdpm/vdpm_results
