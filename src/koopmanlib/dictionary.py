@@ -112,7 +112,6 @@ class DicRBF(AbstractDictionary):
         ones = tf.ones(shape=(rbfs.shape[0], 1), dtype='float64')
         results = tf.concat([ones, data, rbfs], axis=-1)
         return results
-    
 
 
 class DicGaussianRBF(AbstractDictionary, Layer):
@@ -132,8 +131,8 @@ class DicGaussianRBF(AbstractDictionary, Layer):
     def call(self, data):
         rbfs = []
         for n in range(self.centers.shape[0]):
-            r = tf.reshape(tf.square(tf.norm(data- np.matrix(self.centers[n, :]), axis=-1)), 
-                           shape=(-1,1))
+            r = tf.reshape(tf.square(tf.norm(data - np.matrix(self.centers[n, :]), axis=-1)),
+                           shape=(-1, 1))
             rbf = tf.exp(-self.s * r)
             rbfs.append(rbf)
 
@@ -142,7 +141,7 @@ class DicGaussianRBF(AbstractDictionary, Layer):
         ones = tf.ones(shape=(tf.shape(data)[0], 1), dtype='float64')
         results = tf.concat([ones, data, rbfs], axis=-1)
         return results
-    
+
 
 class DicGaussianRBF_NO_Constant(AbstractDictionary, Layer):
     """
@@ -161,8 +160,8 @@ class DicGaussianRBF_NO_Constant(AbstractDictionary, Layer):
     def call(self, data):
         rbfs = []
         for n in range(self.centers.shape[0]):
-            r = tf.reshape(tf.square(tf.norm(data- np.matrix(self.centers[n, :]), axis=-1)), 
-                           shape=(-1,1))
+            r = tf.reshape(tf.square(tf.norm(data - np.matrix(self.centers[n, :]), axis=-1)),
+                           shape=(-1, 1))
             rbf = tf.exp(-self.s * r)
             rbfs.append(rbf)
 
@@ -170,15 +169,16 @@ class DicGaussianRBF_NO_Constant(AbstractDictionary, Layer):
 
         results = tf.concat([data, rbfs], axis=-1)
         return results
-    
+
     def generate_B(self, inputs):
         target_dim = inputs.shape[-1]
-        self.basis_func_number = self.n_dic_customized + target_dim 
+        self.basis_func_number = self.n_dic_customized + target_dim
         # Form B matrix
         self.B = np.zeros((self.basis_func_number, target_dim))
         for i in range(0, target_dim):
             self.B[i][i] = 1
         return self.B
+
 
 class PsiNN_NO_Constant(Layer, AbstractDictionary):
     """Concatenate constant, data and trainable dictionaries together as [1, data, DicNN]
@@ -200,10 +200,10 @@ class PsiNN_NO_Constant(Layer, AbstractDictionary):
         self.dicNN = self.dic_trainable(
             layer_sizes=self.layer_sizes,
             n_psi_train=self.n_dic_customized)
-        
+
     def generate_B(self, inputs):
         target_dim = inputs.shape[-1]
-        self.basis_func_number = self.n_dic_customized + target_dim 
+        self.basis_func_number = self.n_dic_customized + target_dim
         # Form B matrix
         self.B = np.zeros((self.basis_func_number, target_dim))
         for i in range(0, target_dim):
@@ -223,7 +223,7 @@ class PsiNN_NO_Constant(Layer, AbstractDictionary):
             'n_psi_train': self.n_dic_customized
         })
         return config
-    
+
 
 class PsiNN_obs(Layer, AbstractDictionary):
 
@@ -248,13 +248,17 @@ class PsiNN_obs(Layer, AbstractDictionary):
     def call(self, inputs):
         constant = tf.ones_like(tf.slice(inputs, [0, 0], [-1, 1]))
 
-        obs_mass = self.dx * tf.reshape(tf.math.reduce_sum(inputs, axis=-1), shape=(-1,1))
-        obs_momentum = self.dx * tf.reshape(tf.math.reduce_sum(tf.square(inputs), axis=-1), shape=(-1,1))
+        obs_mass = self.dx * \
+            tf.reshape(tf.math.reduce_sum(inputs, axis=-1), shape=(-1, 1))
+        obs_momentum = self.dx * \
+            tf.reshape(tf.math.reduce_sum(
+                tf.square(inputs), axis=-1), shape=(-1, 1))
 
         psi_x_train = self.dicNN(inputs)
-        outputs = Concatenate()([constant, obs_mass, obs_momentum, psi_x_train])
+        outputs = Concatenate()(
+            [constant, obs_mass, obs_momentum, psi_x_train])
         return outputs
-    
+
     def generate_B_mass(self, inputs):
         # only observe the mass
         obs_dim = inputs.shape[-1]
@@ -264,7 +268,7 @@ class PsiNN_obs(Layer, AbstractDictionary):
         for i in range(0, obs_dim):
             self.B[i+1][i] = 1
         return self.B
-    
+
     def generate_B_momentum(self, inputs):
         # only observe the momentum
         obs_dim = inputs.shape[-1]
@@ -283,7 +287,7 @@ class PsiNN_obs(Layer, AbstractDictionary):
             'n_psi_train': self.n_dic_customized
         })
         return config
-    
+
 
 class PsiNN_mass(Layer, AbstractDictionary):
 
@@ -308,12 +312,13 @@ class PsiNN_mass(Layer, AbstractDictionary):
     def call(self, inputs):
         constant = tf.ones_like(tf.slice(inputs, [0, 0], [-1, 1]))
 
-        obs_mass = self.dx * tf.reshape(tf.math.reduce_sum(inputs, axis=-1), shape=(-1,1))
+        obs_mass = self.dx * \
+            tf.reshape(tf.math.reduce_sum(inputs, axis=-1), shape=(-1, 1))
 
         psi_x_train = self.dicNN(inputs)
         outputs = Concatenate()([constant, obs_mass, psi_x_train])
         return outputs
-    
+
     def generate_B(self, inputs):
         # only observe the mass
         obs_dim = inputs.shape[-1]
@@ -332,7 +337,7 @@ class PsiNN_mass(Layer, AbstractDictionary):
             'n_psi_train': self.n_dic_customized
         })
         return config
-    
+
 
 class PsiNN_momentum(Layer, AbstractDictionary):
 
@@ -357,12 +362,14 @@ class PsiNN_momentum(Layer, AbstractDictionary):
     def call(self, inputs):
         constant = tf.ones_like(tf.slice(inputs, [0, 0], [-1, 1]))
 
-        obs_momentum = self.dx * tf.reshape(tf.math.reduce_sum(tf.square(inputs), axis=-1), shape=(-1,1))
+        obs_momentum = self.dx * \
+            tf.reshape(tf.math.reduce_sum(
+                tf.square(inputs), axis=-1), shape=(-1, 1))
 
         psi_x_train = self.dicNN(inputs)
         outputs = Concatenate()([constant, obs_momentum, psi_x_train])
         return outputs
-    
+
     def generate_B(self, inputs):
         # only observe the mass
         obs_dim = inputs.shape[-1]

@@ -6,6 +6,7 @@ from tensorflow.keras.layers import Layer, Dense
 from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
 
+
 class EinsumLayer(tf.keras.layers.Layer):
     """
     Layer wrapping a single tf.einsum operation.
@@ -33,27 +34,29 @@ class KoopmanParamDLGeneralSolver(object):
         self.dic_func = dic.call
         self.n_psi = n_psi
 
-class KoopmanParametricDLSolver(KoopmanParamDLGeneralSolver):   
+
+class KoopmanParametricDLSolver(KoopmanParamDLGeneralSolver):
     def generate_model(self, layer_sizes=[128, 256, 128]):
         hidden_layers = [Dense(s, activation='tanh') for s in layer_sizes]
         # hidden_layers = [Dense(s, activation='relu') for s in layer_sizes]
 
         output_layer = Dense(self.n_psi**2)
-        
+
         inputs_u = Input((self.param_dim,))
         hidden_u = inputs_u
         for layer in hidden_layers:
-            hidden_u = layer(hidden_u)   
+            hidden_u = layer(hidden_u)
         K_u_entry = output_layer(hidden_u)
         K_u = tf.reshape(K_u_entry, shape=(-1, self.n_psi, self.n_psi))
         self.model_K_u = Model(inputs=inputs_u, outputs=K_u, name='K_u')
-        
+
         inputs_u = Input((self.param_dim,))
         inputs_psi_x = Input((self.n_psi,))
         K_u = self.model_K_u(inputs_u)
         psi_y = EinsumLayer('ij,ijk->ik')(inputs_psi_x, K_u)
-        self.model_K_u_pred = Model(inputs=[inputs_u, inputs_psi_x], outputs=psi_y, name='K_u_pred')
-        
+        self.model_K_u_pred = Model(
+            inputs=[inputs_u, inputs_psi_x], outputs=psi_y, name='K_u_pred')
+
         # Build the model related to Psi
         inputs_x = Input((self.target_dim,))
         inputs_y = Input((self.target_dim,))
@@ -65,11 +68,12 @@ class KoopmanParametricDLSolver(KoopmanParamDLGeneralSolver):
         psi_next = self.model_K_u_pred([inputs_u, psi_x])
 
         outputs = psi_next - psi_y
-        self.model = Model(inputs=[inputs_x, inputs_y, inputs_u], outputs=outputs)
+        self.model = Model(
+            inputs=[inputs_x, inputs_y, inputs_u], outputs=outputs)
         return self.model, self.model_K_u_pred
-    
+
     def compute_data_list(self, traj_len, data_x_init, data_u):
-        data_x_init = tf.reshape(data_x_init, shape=(1,-1))
+        data_x_init = tf.reshape(data_x_init, shape=(1, -1))
         data_u = tf.reshape(data_u, shape=(data_u.shape[0], 1, -1))
 
         B = self.dic.generate_B(data_x_init)
@@ -83,7 +87,7 @@ class KoopmanParametricDLSolver(KoopmanParamDLGeneralSolver):
 
         data_pred_list = np.squeeze(np.array(data_pred_list))
         return data_pred_list
-    
+
     # def compute_data_list(self, dic, model_K_u_pred, traj_len, data_x_init, data_u):
     #     data_x_init = tf.reshape(data_x_init, shape=(1,-1))
     #     data_u = tf.reshape(data_u, shape=(data_u.shape[0], 1, -1))
@@ -101,7 +105,7 @@ class KoopmanParametricDLSolver(KoopmanParamDLGeneralSolver):
     #     return data_pred_list
 
 
-class KoopmanLinearDLSolver(KoopmanParamDLGeneralSolver):        
+class KoopmanLinearDLSolver(KoopmanParamDLGeneralSolver):
     def build_model(self):
         """Build model with trainable dictionary
 
@@ -123,18 +127,19 @@ class KoopmanLinearDLSolver(KoopmanParamDLGeneralSolver):
                         use_bias=False,
                         name='Layer_B',
                         trainable=False)
-        
+
         psi_next = Layer_A(psi_x) + Layer_B(inputs_u)
 
         outputs = psi_next - psi_y
-        self.model = Model(inputs=[inputs_x, inputs_u, inputs_y], outputs=outputs)
+        self.model = Model(
+            inputs=[inputs_x, inputs_u, inputs_y], outputs=outputs)
         return self.model
-    
-    def compute_AB(self, dic_func, data_x, data_u, data_y):            
-        psi_x = dic_func(data_x)     
+
+    def compute_AB(self, dic_func, data_x, data_u, data_y):
+        psi_x = dic_func(data_x)
         concat_psix_u = tf.concat([psi_x, data_u], axis=-1)
         psi_y = dic_func(data_y)
-        
+
         # If the number of samples is larger than the dimension of dictionaries,
         # the pseudo-inverse matrix is the left one we want.
         concat_psix_u_inv = tf.linalg.pinv(concat_psix_u)
@@ -151,30 +156,30 @@ class KoopmanLinearDLSolver(KoopmanParamDLGeneralSolver):
         :return: history
         :rtype: history callback object
         """
-        
+
         lr_callbacks = tf.keras.callbacks.ReduceLROnPlateau(monitor='loss',
-                                                    factor=0.1,
-                                                    patience=200,
-                                                    verbose=0,
-                                                    mode='auto',
-                                                    min_delta=0.0001,
-                                                    cooldown=0,
-                                                    min_lr=1e-12)
-        
-        history = model.fit(x=[data_x, data_u, data_y], 
-                    y=zeros_data_y_train, 
-                    epochs=epochs, 
-                    batch_size=batch_size,
-                    callbacks=lr_callbacks,
-                    verbose=1)
+                                                            factor=0.1,
+                                                            patience=200,
+                                                            verbose=0,
+                                                            mode='auto',
+                                                            min_delta=0.0001,
+                                                            cooldown=0,
+                                                            min_lr=1e-12)
+
+        history = model.fit(x=[data_x, data_u, data_y],
+                            y=zeros_data_y_train,
+                            epochs=epochs,
+                            batch_size=batch_size,
+                            callbacks=lr_callbacks,
+                            verbose=1)
         return history
 
     def build(
             self,
             model,
             data_x,
-            data_u, 
-            data_y, 
+            data_u,
+            data_y,
             zeros_data_y_train,
             epochs,
             batch_size,
@@ -213,24 +218,23 @@ class KoopmanLinearDLSolver(KoopmanParamDLGeneralSolver):
         for i in range(epochs):
             # One step for computing K
             self.AB = self.compute_AB(self.dic_func,
-                                    data_x,
-                                    data_u,
-                                    data_y)
-            
-            self.A = self.AB[:-self.param_dim,:]
-            self.B = self.AB[-self.param_dim:,:]
-            
-            
+                                      data_x,
+                                      data_u,
+                                      data_y)
+
+            self.A = self.AB[:-self.param_dim, :]
+            self.B = self.AB[-self.param_dim:, :]
+
             self.model.get_layer('Layer_A').weights[0].assign(self.A)
             self.model.get_layer('Layer_B').weights[0].assign(self.B)
 
             # Two steps for training PsiNN
             self.history = self.train_psi(self.model,
                                           data_x,
-                                          data_u, 
-                                          data_y, 
-                                          zeros_data_y_train, 
-                                          epochs=10, 
+                                          data_u,
+                                          data_y,
+                                          zeros_data_y_train,
+                                          epochs=10,
                                           batch_size=200)
 
             print('number of the outer loop:', i)
@@ -245,7 +249,7 @@ class KoopmanLinearDLSolver(KoopmanParamDLGeneralSolver):
                         self.model.optimizer.lr = curr_lr
 
     def compute_data_list(self, traj_len, data_x_init, data_u):
-        data_x_init = tf.reshape(data_x_init, shape=(1,-1))
+        data_x_init = tf.reshape(data_x_init, shape=(1, -1))
         data_u = tf.reshape(data_u, shape=(data_u.shape[0], 1, -1))
 
         B = self.dic.generate_B(data_x_init)
@@ -253,15 +257,16 @@ class KoopmanLinearDLSolver(KoopmanParamDLGeneralSolver):
 
         for i in range(traj_len-1):
             psi_x = self.dic.call(data_pred_list[-1])
-            psi_y = self.model.get_layer('Layer_A')(psi_x) + self.model.get_layer('Layer_B')(data_u[i])
+            psi_y = self.model.get_layer('Layer_A')(
+                psi_x) + self.model.get_layer('Layer_B')(data_u[i])
             y_pred = psi_y @ B
             data_pred_list.append(y_pred)
 
         data_pred_list = np.squeeze(np.array(data_pred_list))
         return data_pred_list
 
-    
-class KoopmanBilinearDLSolver(KoopmanParamDLGeneralSolver):        
+
+class KoopmanBilinearDLSolver(KoopmanParamDLGeneralSolver):
     def build_model(self):
         """Build model with trainable dictionary
 
@@ -276,11 +281,11 @@ class KoopmanBilinearDLSolver(KoopmanParamDLGeneralSolver):
         # u_psix: Multiply each dimension (scalar) of inputs_u (vector) on psi_x (vector)
         u_psix = tf.einsum('ij,ik->kij', psi_x, inputs_u)
         psi_y = self.dic_func(inputs_y)
-        
+
         u_psix_list = []
         for curr in u_psix:
             u_psix_list.append(curr)
-        
+
         u_psix_list = tf.concat(u_psix_list, axis=-1)
 
         Layer_A = Dense(units=psi_y.shape[-1],
@@ -291,26 +296,26 @@ class KoopmanBilinearDLSolver(KoopmanParamDLGeneralSolver):
                         use_bias=False,
                         name='Layer_B',
                         trainable=False)
-        
+
         psi_next = Layer_A(psi_x) + Layer_B(u_psix_list)
 
         outputs = psi_next - psi_y
-        self.model = Model(inputs=[inputs_x, inputs_u, inputs_y], outputs=outputs)
+        self.model = Model(
+            inputs=[inputs_x, inputs_u, inputs_y], outputs=outputs)
         return self.model
-    
-    def compute_AB(self, dic_func, data_x, data_u, data_y):            
+
+    def compute_AB(self, dic_func, data_x, data_u, data_y):
         psi_x = dic_func(data_x)
         u_psix = tf.einsum('ij,ik->kij', psi_x, data_u)
         u_psix_list = []
         for curr in u_psix:
             u_psix_list.append(curr)
-        
+
         u_psix_list = tf.concat(u_psix_list, axis=-1)
-        
-        
+
         concat_psix_psix_u = tf.concat([psi_x, u_psix_list], axis=-1)
         psi_y = dic_func(data_y)
-        
+
         # If the number of samples is larger than the dimension of dictionaries,
         # the pseudo-inverse matrix is the left one we want.
         concat_psix_psix_u_inv = tf.linalg.pinv(concat_psix_psix_u)
@@ -327,30 +332,30 @@ class KoopmanBilinearDLSolver(KoopmanParamDLGeneralSolver):
         :return: history
         :rtype: history callback object
         """
-        
+
         lr_callbacks = tf.keras.callbacks.ReduceLROnPlateau(monitor='loss',
-                                                    factor=0.1,
-                                                    patience=200,
-                                                    verbose=0,
-                                                    mode='auto',
-                                                    min_delta=0.0001,
-                                                    cooldown=0,
-                                                    min_lr=1e-12)
-        
-        history = model.fit(x=[data_x, data_u, data_y], 
-                    y=zeros_data_y_train, 
-                    epochs=epochs, 
-                    batch_size=batch_size,
-                    callbacks=lr_callbacks,
-                    verbose=1)
+                                                            factor=0.1,
+                                                            patience=200,
+                                                            verbose=0,
+                                                            mode='auto',
+                                                            min_delta=0.0001,
+                                                            cooldown=0,
+                                                            min_lr=1e-12)
+
+        history = model.fit(x=[data_x, data_u, data_y],
+                            y=zeros_data_y_train,
+                            epochs=epochs,
+                            batch_size=batch_size,
+                            callbacks=lr_callbacks,
+                            verbose=1)
         return history
 
     def build(
             self,
             model,
             data_x,
-            data_u, 
-            data_y, 
+            data_u,
+            data_y,
             zeros_data_y_train,
             epochs,
             batch_size,
@@ -389,23 +394,23 @@ class KoopmanBilinearDLSolver(KoopmanParamDLGeneralSolver):
         for i in range(epochs):
             # One step for computing K
             self.AB = self.compute_AB(self.dic_func,
-                                    data_x,
-                                    data_u,
-                                    data_y)
-            
-            self.A = self.AB[:-self.param_dim*self.n_psi,:]
-            self.B = self.AB[-self.param_dim*self.n_psi:,:]
-                
+                                      data_x,
+                                      data_u,
+                                      data_y)
+
+            self.A = self.AB[:-self.param_dim*self.n_psi, :]
+            self.B = self.AB[-self.param_dim*self.n_psi:, :]
+
             self.model.get_layer('Layer_A').weights[0].assign(self.A)
             self.model.get_layer('Layer_B').weights[0].assign(self.B)
 
             # Two steps for training PsiNN
             self.history = self.train_psi(self.model,
                                           data_x,
-                                          data_u, 
-                                          data_y, 
-                                          zeros_data_y_train, 
-                                          epochs=10, 
+                                          data_u,
+                                          data_y,
+                                          zeros_data_y_train,
+                                          epochs=10,
                                           batch_size=200)
 
             print('number of the outer loop:', i)
@@ -420,7 +425,7 @@ class KoopmanBilinearDLSolver(KoopmanParamDLGeneralSolver):
                         self.model.optimizer.lr = curr_lr
 
     def compute_data_list(self, traj_len, data_x_init, data_u):
-        data_x_init = tf.reshape(data_x_init, shape=(1,-1))
+        data_x_init = tf.reshape(data_x_init, shape=(1, -1))
         data_u = tf.reshape(data_u, shape=(data_u.shape[0], 1, -1))
 
         B = self.dic.generate_B(data_x_init)
@@ -434,7 +439,8 @@ class KoopmanBilinearDLSolver(KoopmanParamDLGeneralSolver):
                 u_psix_list.append(curr)
             u_psix_list = tf.concat(u_psix_list, axis=-1)
 
-            psi_y = self.model.get_layer('Layer_A')(psi_x) + self.model.get_layer('Layer_B')(u_psix_list)
+            psi_y = self.model.get_layer('Layer_A')(
+                psi_x) + self.model.get_layer('Layer_B')(u_psix_list)
             y_pred = psi_y @ B
             data_pred_list.append(y_pred)
 
@@ -442,20 +448,20 @@ class KoopmanBilinearDLSolver(KoopmanParamDLGeneralSolver):
         return data_pred_list
 
 
-class KoopmanActuatedDLSolver(KoopmanParamDLGeneralSolver):    
+class KoopmanActuatedDLSolver(KoopmanParamDLGeneralSolver):
     def __init__(self, target_dim,
-                        param_dim, 
-                        dic, 
-                        n_psi,
-                        basis_u_func):
-        super(KoopmanActuatedDLSolver, self).__init__(target_dim, 
-                                                      param_dim, 
-                                                      dic, 
+                 param_dim,
+                 dic,
+                 n_psi,
+                 basis_u_func):
+        super(KoopmanActuatedDLSolver, self).__init__(target_dim,
+                                                      param_dim,
+                                                      dic,
                                                       n_psi)
         self.basis_u_func = basis_u_func
         # Need to set basis_u_func as input in this class
         # because this function will be used to build the basis of K(u).
-   
+
     def build_model(self):
         """Build model with trainable dictionary
 
@@ -473,36 +479,37 @@ class KoopmanActuatedDLSolver(KoopmanParamDLGeneralSolver):
         u_psix_list = []
         for curr in u_psix:
             u_psix_list.append(curr)
-        
+
         u_psix_list = tf.concat(u_psix_list, axis=-1)
         concat_psix_psix_u = tf.concat([psi_x, u_psix_list], axis=-1)
         # This helps to change the basis functions of u from [u, u^2, u^3] to [1, u, u^2, u^3].
-        
+
         psi_y = self.dic_func(inputs_y)
 
         Layer_Ks = Dense(units=psi_y.shape[-1],
-                        use_bias=False,
-                        name='Layer_Ks',
-                        trainable=False)
-        
+                         use_bias=False,
+                         name='Layer_Ks',
+                         trainable=False)
+
         psi_next = Layer_Ks(concat_psix_psix_u)
 
         outputs = psi_next - psi_y
-        self.model = Model(inputs=[inputs_x, inputs_u, inputs_y], outputs=outputs)
+        self.model = Model(
+            inputs=[inputs_x, inputs_u, inputs_y], outputs=outputs)
         return self.model
-    
-    def compute_Ks(self, dic_func, data_x, data_u, data_y):            
+
+    def compute_Ks(self, dic_func, data_x, data_u, data_y):
         psi_x = dic_func(data_x)
         basis_u = self.basis_u_func(data_u)
         u_psix = tf.einsum('ij,ik->kij', psi_x, basis_u)
         u_psix_list = []
         for curr in u_psix:
             u_psix_list.append(curr)
-        
+
         u_psix_list = tf.concat(u_psix_list, axis=-1)
         concat_psix_psix_u = tf.concat([psi_x, u_psix_list], axis=-1)
         psi_y = dic_func(data_y)
-        
+
         # If the number of samples is larger than the dimension of dictionaries,
         # the pseudo-inverse matrix is the left one we want.
         concat_psix_psix_u_inv = tf.linalg.pinv(concat_psix_psix_u)
@@ -519,29 +526,29 @@ class KoopmanActuatedDLSolver(KoopmanParamDLGeneralSolver):
         :return: history
         :rtype: history callback object
         """
-        
+
         lr_callbacks = tf.keras.callbacks.ReduceLROnPlateau(monitor='loss',
-                                                    factor=0.1,
-                                                    patience=200,
-                                                    verbose=0,
-                                                    mode='auto',
-                                                    min_delta=0.0001,
-                                                    cooldown=0,
-                                                    min_lr=1e-12)
-        
-        history = model.fit(x=[data_x, data_u, data_y], 
-                    y=zeros_data_y_train, 
-                    epochs=epochs, 
-                    batch_size=batch_size,
-                    callbacks=lr_callbacks,
-                    verbose=1)
+                                                            factor=0.1,
+                                                            patience=200,
+                                                            verbose=0,
+                                                            mode='auto',
+                                                            min_delta=0.0001,
+                                                            cooldown=0,
+                                                            min_lr=1e-12)
+
+        history = model.fit(x=[data_x, data_u, data_y],
+                            y=zeros_data_y_train,
+                            epochs=epochs,
+                            batch_size=batch_size,
+                            callbacks=lr_callbacks,
+                            verbose=1)
         return history
 
     def opt_nn_model(
             self,
             data_x,
-            data_u, 
-            data_y, 
+            data_u,
+            data_y,
             zeros_data_y_train,
             epochs,
             batch_size,
@@ -579,19 +586,19 @@ class KoopmanActuatedDLSolver(KoopmanParamDLGeneralSolver):
         for i in range(epochs):
             # One step for computing K
             self.Ks = self.compute_Ks(self.dic_func,
-                                    data_x,
-                                    data_u,
-                                    data_y)
-                
+                                      data_x,
+                                      data_u,
+                                      data_y)
+
             self.model.get_layer('Layer_Ks').weights[0].assign(self.Ks)
 
             # Two steps for training PsiNN
             self.history = self.train_psi(self.model,
                                           data_x,
-                                          data_u, 
-                                          data_y, 
-                                          zeros_data_y_train, 
-                                          epochs=10, 
+                                          data_u,
+                                          data_y,
+                                          zeros_data_y_train,
+                                          epochs=10,
                                           batch_size=200)
 
             print('number of the outer loop:', i)
@@ -608,20 +615,20 @@ class KoopmanActuatedDLSolver(KoopmanParamDLGeneralSolver):
     def opt_rbf_model(
             self,
             data_x,
-            data_u, 
+            data_u,
             data_y):
 
         # self.model = model
 
-            # One step for computing K
+        # One step for computing K
         self.Ks = self.compute_Ks(self.dic_func,
-                                data_x,
-                                data_u,
-                                data_y)
-                
+                                  data_x,
+                                  data_u,
+                                  data_y)
+
         self.model.get_layer('Layer_Ks').weights[0].assign(self.Ks)
         return self.model
-    
+
     # Only test on one trajectory
     def compute_data_list(self, traj_len, data_x_init, data_u):
         # data_x_init = tf.reshape(data_x_init, shape=(1,-1))
@@ -631,7 +638,7 @@ class KoopmanActuatedDLSolver(KoopmanParamDLGeneralSolver):
         # data_pred_list = [data_x_init]
         # basis_u = self.basis_u_func(data_u)
 
-        data_x_init = tf.reshape(data_x_init, shape=(1,-1))
+        data_x_init = tf.reshape(data_x_init, shape=(1, -1))
         basis_u = self.basis_u_func(data_u)
 
         basis_u = tf.reshape(basis_u, shape=(basis_u.shape[0], 1, -1))
@@ -654,6 +661,3 @@ class KoopmanActuatedDLSolver(KoopmanParamDLGeneralSolver):
 
         data_pred_list = np.squeeze(np.asarray(data_pred_list))
         return data_pred_list
-    
-    
-    
