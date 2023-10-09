@@ -1,5 +1,7 @@
-# Learning Parametric Koopman Decomposition
-The code of the experiments of Learning  Parametric Koopman Decompositions.
+# Learning Parametric Koopman Decompositions
+The package implements the data-driven parametric Koopman decompositions [1]. The projected Koopman operator and the dictionaries are trained simultaneously. It outperfoms some current algorithms about Koopman with control over the forward problems and optimal control problems.
+
+The package offers data-driven parametric Koopman decompositions as outlined in [1]. Both the projected Koopman operator and dictionaries are trained simultaneously. Compared to some existing algorithms, it provides enhanced performance in handling Koopman with control for forward predictions and optimal control challenges.
 
 ## Installation
 
@@ -137,3 +139,6 @@ $curl -L -o PKNN_results.zip 'https://www.dropbox.com/scl/fi/91an423jmdy7n918y60
 ```
 
 Please assign the experiment results to their respective folders.
+
+## Reference
+[1] [Guo, Yue, Milan Korda, Ioannis G. Kevrekidis, and Qianxiao Li. "Learning Parametric Koopman Decompositions for Prediction and Control." arXiv preprint arXiv:2310.01124 (2023).](\url{https://arxiv.org/abs/2310.01124}).
