@@ -1,5 +1,4 @@
 # Learning Parametric Koopman Decompositions
-The package implements the data-driven parametric Koopman decompositions [1]. The projected Koopman operator and the dictionaries are trained simultaneously. It outperfoms some current algorithms about Koopman with control over the forward problems and optimal control problems.
 
 The package offers data-driven parametric Koopman decompositions as outlined in [1]. Both the projected Koopman operator and dictionaries are trained simultaneously. Compared to some existing algorithms, it provides enhanced performance in handling Koopman with control for forward predictions and optimal control challenges.
 
