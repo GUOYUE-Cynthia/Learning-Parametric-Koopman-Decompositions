@@ -11,6 +11,8 @@ import sys
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
+from koopmanlib.K_structure import Model_K_u_Layer
+
 
 config_file = sys.argv[1]
 with open(config_file, 'r') as f:
@@ -90,16 +92,20 @@ data_u = dict_data[()]['data_u']
 
 dic_pk = PsiNN(layer_sizes=dict_layer_size, n_psi_train=n_psi_train)
 
-solver_pk = KoopmanParametricDLSolver(
-    target_dim=target_dim, param_dim=param_dim, n_psi=n_psi, dic=dic_pk)
-
 K_layer_size = config['nn_settings']['K_layer_size']
 pknn_epochs = config['nn_settings']['pknn_epochs']
 
+model_K_u = Model_K_u_Layer(layer_sizes=K_layer_size, 
+                                n_psi=n_psi)
 
-# model_pk, model_K_u_pred_pk = solver_pk.generate_model(layer_sizes=[128, 256, 128])
-model_pk, model_K_u_pred_pk = solver_pk.generate_model(
-    layer_sizes=K_layer_size)
+solver_pk = KoopmanParametricDLSolver(
+    target_dim=target_dim, 
+    param_dim=param_dim, 
+    n_psi=n_psi, 
+    dic=dic_pk, 
+    model_K_u=model_K_u)
+
+model_pk, model_K_u_pred_pk = solver_pk.generate_model()
 
 zeros_data_y_train = tf.zeros_like(dic_pk(data_y))
 

@@ -36,20 +36,21 @@ class KoopmanParamDLGeneralSolver(object):
 
 
 class KoopmanParametricDLSolver(KoopmanParamDLGeneralSolver):
-    def generate_model(self, layer_sizes=[128, 256, 128]):
-        hidden_layers = [Dense(s, activation='tanh') for s in layer_sizes]
-        # hidden_layers = [Dense(s, activation='relu') for s in layer_sizes]
+    def __init__(self,
+                 target_dim,
+                 param_dim,
+                 dic, 
+                 n_psi,
+                 model_K_u):
+        super(KoopmanParametricDLSolver, self).__init__(
+            target_dim,
+            param_dim,
+            dic, 
+            n_psi,
+            )
+        self.model_K_u = model_K_u
 
-        output_layer = Dense(self.n_psi**2)
-
-        inputs_u = Input((self.param_dim,))
-        hidden_u = inputs_u
-        for layer in hidden_layers:
-            hidden_u = layer(hidden_u)
-        K_u_entry = output_layer(hidden_u)
-        K_u = tf.reshape(K_u_entry, shape=(-1, self.n_psi, self.n_psi))
-        self.model_K_u = Model(inputs=inputs_u, outputs=K_u, name='K_u')
-
+    def generate_model(self):
         inputs_u = Input((self.param_dim,))
         inputs_psi_x = Input((self.n_psi,))
         K_u = self.model_K_u(inputs_u)
@@ -88,21 +89,6 @@ class KoopmanParametricDLSolver(KoopmanParamDLGeneralSolver):
         data_pred_list = np.squeeze(np.array(data_pred_list))
         return data_pred_list
 
-    # def compute_data_list(self, dic, model_K_u_pred, traj_len, data_x_init, data_u):
-    #     data_x_init = tf.reshape(data_x_init, shape=(1,-1))
-    #     data_u = tf.reshape(data_u, shape=(data_u.shape[0], 1, -1))
-
-    #     B = dic.generate_B(data_x_init)
-    #     data_pred_list = [data_x_init]
-
-    #     for i in range(traj_len-1):
-    #         psi_x = dic.call(data_pred_list[-1])
-    #         psi_y = model_K_u_pred([data_u[i], psi_x])
-    #         y_pred = psi_y @ B
-    #         data_pred_list.append(y_pred)
-
-    #     data_pred_list = np.squeeze(np.array(data_pred_list))
-    #     return data_pred_list
 
 
 class KoopmanLinearDLSolver(KoopmanParamDLGeneralSolver):
@@ -661,3 +647,5 @@ class KoopmanActuatedDLSolver(KoopmanParamDLGeneralSolver):
 
         data_pred_list = np.squeeze(np.asarray(data_pred_list))
         return data_pred_list
+
+
