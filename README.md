@@ -1,6 +1,11 @@
 # Learning Parametric Koopman Decompositions
 
-The package offers data-driven parametric Koopman decompositions as outlined in [1]. Both the projected Koopman operator and dictionaries are trained simultaneously. Compared to some existing algorithms, it provides enhanced performance in handling Koopman with control for forward predictions and optimal control challenges.
+The package implements the data-driven extended dynamic mode decomposition (EDMD) with trainable dictionary [1] and data-driven parametric Koopman decompositions [2]. 
+For non-parametric problems in [1], this is a generalization of the classical EDMD and is most effective for high dimensional or highly nonlinear problems
+where *a priori* choice of dictionary functions are difficult. 
+This package implements iterative algorithms to perform Koopman operator analysis, such as computing eigenfunctions, eigenvalues and modes,
+using a deep neural network based parameterization of the Koopman dictionary functions.
+Furthermore, for parametric cases in [2], both the projected Koopman operator and dictionaries are trained simultaneously. Compared to some existing algorithms, it provides enhanced performance in handling Koopman with control for forward predictions and optimal control challenges.
 
 ## Installation
 
@@ -140,4 +145,6 @@ $curl -L -o PKNN_results.zip 'https://www.dropbox.com/scl/fi/91an423jmdy7n918y60
 Please assign the experimental results to their respective folders.
 
 ## Reference
-[1] [Guo, Yue, Milan Korda, Ioannis G. Kevrekidis, and Qianxiao Li. "Learning Parametric Koopman Decompositions for Prediction and Control." arXiv preprint arXiv:2310.01124 (2023).](https://arxiv.org/abs/2310.01124)
+[1] [Li, Q., Dietrich, F., Bollt, E. M., & Kevrekidis, I. G. (2017). Extended dynamic mode decomposition with dictionary learning: A data-driven adaptive spectral decomposition of the Koopman operator. Chaos: An Interdisciplinary Journal of Nonlinear Science, 27(10), 103111.](https://aip-scitation-org.libproxy1.nus.edu.sg/doi/full/10.1063/1.4993854)
+
+[2] [Guo, Yue, Milan Korda, Ioannis G. Kevrekidis, and Qianxiao Li. "Learning Parametric Koopman Decompositions for Prediction and Control." arXiv preprint arXiv:2310.01124 (2023).](https://arxiv.org/abs/2310.01124)
