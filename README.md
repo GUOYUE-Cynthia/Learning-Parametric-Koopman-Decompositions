@@ -137,7 +137,7 @@ or run
 $curl -L -o PKNN_results.zip 'https://www.dropbox.com/scl/fi/91an423jmdy7n918y60l8/PKNN_results.zip?rlkey=xfzl33dr3xbbamu2czxifd0ho&dl=1'
 ```
 
-Please assign the experiment results to their respective folders.
+Please assign the experimental results to their respective folders.
 
 ## Reference
 [1] [Guo, Yue, Milan Korda, Ioannis G. Kevrekidis, and Qianxiao Li. "Learning Parametric Koopman Decompositions for Prediction and Control." arXiv preprint arXiv:2310.01124 (2023).](https://arxiv.org/abs/2310.01124)
