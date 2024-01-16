@@ -18,11 +18,6 @@ n_traj = config['data_settings']['n_traj']
 traj_len = config['data_settings']['traj_len']
 forcing_type = config['data_settings']['forcing_type']
 
-x = np.linspace(-10, 10, Nx)
-t = np.arange(0, traj_len, 1)
-target_dim = Nx*2
-param_dim = 1
-
 
 # Set the size of the domain, and create the discretized grid.
 L = 2 * np.pi
@@ -67,4 +62,4 @@ data_dict = {'data_x': data_x,
              'data_y': data_y,
              'data_u': data_u}
 
-np.save(os.path.join(data_path, 'data_kdv_'+forcing_type+'.npy'), data_dict)
+# np.save(os.path.join(data_path, 'data_kdv_'+forcing_type+'.npy'), data_dict)
