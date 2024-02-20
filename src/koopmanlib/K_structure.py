@@ -64,7 +64,6 @@ class Model_K_u_Layer_One(Layer):
         config = super(Model_K_u_Layer_One, self).get_config()
         config.update({
             'layer_sizes': self.layer_sizes,
-            'n_psi': self.n_psi,
-            'l1_reg': self.l1_reg
+            'n_psi': self.n_psi
         })
         return config
