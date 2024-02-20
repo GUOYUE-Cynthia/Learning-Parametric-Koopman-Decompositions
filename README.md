@@ -31,12 +31,6 @@ This project uses `python 3.8`. Set up the project for development using the fol
     ```
 5. Add this virtual environment to Jupyter by typing
     ```bash
-<<<<<<< HEAD
-    $python3 -m ipykernel install --user --name=koopman_env
-=======
-    $python -m ipykernel install --user --name=koopman_env
->>>>>>> 26c04c7cc63fdf94d8d54be0333130b763885d57
-    ```
 
 ## Quickstart
 
