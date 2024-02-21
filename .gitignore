@@ -6,5 +6,5 @@
 # examples/Parametric Koopman/vdpm/vdpm_results
 # examples/Parametric Koopman/kdv/kdv_results
 **/*_results*/data/
-**/*_results*/weights/
+# **/*_results*/weights/
 # /.vscode
