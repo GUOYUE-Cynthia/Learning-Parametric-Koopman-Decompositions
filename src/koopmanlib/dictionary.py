@@ -1,7 +1,7 @@
 from scipy.cluster.vq import kmeans
 import scipy
 from tensorflow.keras.layers import Layer, Dense
-from tensorflow.keras.layers import Input, Add, Multiply, Lambda, Concatenate
+from tensorflow.keras.layers import Concatenate
 from tensorflow.keras.models import Model
 import numpy as np
 import tensorflow as tf

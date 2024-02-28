@@ -380,7 +380,6 @@ class KoopmanBilinearDLSolver(KoopmanParamDLGeneralSolver):
         losses = []
         for i in range(epochs):
             
-
             # 10 steps for training PsiNN
             self.history = self.train_psi(self.model,
                                           data_x,
