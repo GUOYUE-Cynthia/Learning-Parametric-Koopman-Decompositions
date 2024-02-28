@@ -67,7 +67,8 @@ class PsiNN(Layer, AbstractDictionary):
         self.n_dic_customized = n_psi_train
         self.dicNN = self.dic_trainable(
             layer_sizes=self.layer_sizes,
-            n_psi_train=self.n_dic_customized)
+            n_psi_train=self.n_dic_customized,
+            name='DicNN')
 
     def call(self, inputs):
         constant = tf.ones_like(tf.slice(inputs, [0, 0], [-1, 1]))

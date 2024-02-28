@@ -202,6 +202,16 @@ class KoopmanLinearDLSolver(KoopmanParamDLGeneralSolver):
         # Training Loop
         losses = []
         for i in range(epochs):
+
+            # 10 steps for training PsiNN
+            self.history = self.train_psi(self.model,
+                                          data_x,
+                                          data_u,
+                                          data_y,
+                                          zeros_data_y_train,
+                                          epochs=10,
+                                          batch_size=200)
+            
             # One step for computing K
             self.AB = self.compute_AB(self.dic_func,
                                       data_x,
@@ -213,15 +223,6 @@ class KoopmanLinearDLSolver(KoopmanParamDLGeneralSolver):
 
             self.model.get_layer('Layer_A').weights[0].assign(self.A)
             self.model.get_layer('Layer_B').weights[0].assign(self.B)
-
-            # Two steps for training PsiNN
-            self.history = self.train_psi(self.model,
-                                          data_x,
-                                          data_u,
-                                          data_y,
-                                          zeros_data_y_train,
-                                          epochs=10,
-                                          batch_size=200)
 
             print('number of the outer loop:', i)
             if i % log_interval == 0:
@@ -378,6 +379,17 @@ class KoopmanBilinearDLSolver(KoopmanParamDLGeneralSolver):
         # Training Loop
         losses = []
         for i in range(epochs):
+            
+
+            # 10 steps for training PsiNN
+            self.history = self.train_psi(self.model,
+                                          data_x,
+                                          data_u,
+                                          data_y,
+                                          zeros_data_y_train,
+                                          epochs=10,
+                                          batch_size=200)
+            
             # One step for computing K
             self.AB = self.compute_AB(self.dic_func,
                                       data_x,
@@ -389,15 +401,6 @@ class KoopmanBilinearDLSolver(KoopmanParamDLGeneralSolver):
 
             self.model.get_layer('Layer_A').weights[0].assign(self.A)
             self.model.get_layer('Layer_B').weights[0].assign(self.B)
-
-            # Two steps for training PsiNN
-            self.history = self.train_psi(self.model,
-                                          data_x,
-                                          data_u,
-                                          data_y,
-                                          zeros_data_y_train,
-                                          epochs=10,
-                                          batch_size=200)
 
             print('number of the outer loop:', i)
             if i % log_interval == 0:

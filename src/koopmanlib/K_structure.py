@@ -39,11 +39,11 @@ class Model_K_u_Layer_One(Layer):
 
     """
 
-    def __init__(self, layer_sizes=[64, 64], n_psi=3, **kwargs):
+    def __init__(self, layer_sizes=[64, 64], n_psi=3, activation='tanh', **kwargs):
         super(Model_K_u_Layer_One, self).__init__(**kwargs)
         self.n_psi = n_psi
         self.layer_sizes = layer_sizes
-        self.hidden_layers = [Dense(s, activation='tanh') for s in layer_sizes]
+        self.hidden_layers = [Dense(s, activation=activation) for s in layer_sizes]
         self.output_layer = Dense(self.n_psi*(n_psi-1)) # no activation functions
        
 

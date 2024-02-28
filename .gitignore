@@ -7,4 +7,5 @@
 # examples/Parametric Koopman/kdv/kdv_results
 **/*_results*/data/
 # **/*_results*/weights/
-# /.vscode
+/.vscode
+/pknn_env
