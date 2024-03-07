@@ -10,6 +10,8 @@ from koopmanlib.dictionary import PsiNN
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
+from tqdm.keras import TqdmCallback
+
 
 config_file = sys.argv[1]
 with open(config_file, 'r') as f:
@@ -87,15 +89,30 @@ model_pk.compile(optimizer=Adam(0.001),
                  loss='mse')
 
 lr_callback = tf.keras.callbacks.ReduceLROnPlateau(monitor='loss',
-                                                   factor=0.1,
+                                                   factor=0.8,
                                                    patience=150,
                                                    verbose=0,
                                                    mode='auto',
                                                    min_delta=0.0001,
                                                    cooldown=0,
-                                                   min_lr=1e-12)
+                                                   min_lr=1e-7)
 
-es_callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=60)
+# # Define the early stopping criteria
+# es_callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
+#                                                 min_delta=1e-12,
+#                                                 patience=100, 
+#                                                 verbose=1, 
+#                                                 mode='auto')
+
+tqdm_callback = TqdmCallback(verbose=1)
+
+checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath=os.path.join(weights_path, 'norm_high_u_psi_' +
+                        str(n_psi_train)+'_model_pk_fhn_Nx_'+str(Nx)+'.h5'),
+                        monitor='val_loss',
+                        save_best_only=True,
+                        save_weights_only=True,
+                        mode='min',
+                        save_freq='epoch')
 
 zeros_data_z_next_train = tf.zeros_like(dic_pk(data_z_next))
 
@@ -103,11 +120,10 @@ history = model_pk.fit(x=[z_curr_normalized, z_next_normalized, data_u],
                        y=zeros_data_z_next_train,
                        epochs=pknn_epochs,
                        batch_size=pknn_epochs,
-                       callbacks=[lr_callback, es_callback],
-                       verbose=1)
+                       validation_split=0.2,
+                       callbacks=[lr_callback, checkpoint_callback, tqdm_callback],
+                       verbose=0)
 
-model_pk.save_weights(os.path.join(weights_path, 'norm_high_u_psi_' +
-                      str(n_psi_train)+'_model_pk_fhn_Nx_'+str(Nx)+'.h5'))
 
 # # Build Dl + Polynomial K
 # dic_dl_polyK = PsiNN(layer_sizes=dict_layer_size, n_psi_train=n_psi_train)

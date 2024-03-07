@@ -13,6 +13,8 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 from koopmanlib.K_structure import Model_K_u_Layer, Model_K_u_Layer_One
 
+from tqdm.keras import TqdmCallback
+
 
 config_file = sys.argv[1]
 with open(config_file, 'r') as f:
@@ -117,7 +119,7 @@ for n_traj_per_param in n_traj_per_param_list:
     model_pk.compile(optimizer=Adam(0.001),
                     loss='mse')
 
-    lr_callbacks = tf.keras.callbacks.ReduceLROnPlateau(monitor='loss',
+    lr_callback = tf.keras.callbacks.ReduceLROnPlateau(monitor='loss',
                                                         factor=0.1,
                                                         patience=50,
                                                         verbose=0,
@@ -125,23 +127,34 @@ for n_traj_per_param in n_traj_per_param_list:
                                                         min_delta=0.0001,
                                                         cooldown=0,
                                                         min_lr=1e-12)
+    
 
-    # es_callbacks = tf.keras.callbacks.EarlyStopping(monitor='loss',
-    #                                                 min_delta=0,
-    #                                                 patience=20,
-    #                                                 verbose=0,
-    #                                                 mode='min',
-    #                                                 baseline=1e-7)
+    # Define the early stopping criteria
+    es_callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
+                                                  min_delta=1e-9,
+                                                  patience=50, 
+                                                  verbose=1, 
+                                                  mode='auto')
+    
+    # Define the TqdmCallback for progress bar
+    tqdm_callback = TqdmCallback(verbose=1)
+
+    checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath=os.path.join(weights_path, 'pk_duffing_weights_data_' +
+                        str(n_traj_per_param)+'_n_param_'+str(n_param)+'.h5'),
+                        monitor='val_loss',
+                        save_best_only=True,
+                        save_weights_only=True,
+                        mode='min',
+                        save_freq='epoch')
+
 
     history = model_pk.fit(x=[data_x, data_y, data_u],
                         y=zeros_data_y_train,
                         epochs=pknn_epochs,
                         batch_size=200,
-                        # callbacks=[lr_callbacks,es_callbacks],
-                        callbacks=[lr_callbacks],
-                        verbose=1)
+                        validation_split=0.2,
+                        callbacks=[lr_callback,es_callback,tqdm_callback,checkpoint_callback],
+                        verbose=0)
 
-    model_pk.save_weights(os.path.join(weights_path, 'pk_duffing_weights_data_' +
-                        str(n_traj_per_param)+'_n_param_'+str(n_param)+'.h5'))
     
     print('Finished training for n_traj_per_param = ', n_traj_per_param, 'n_param = ', n_param)

@@ -8,6 +8,8 @@ import tensorflow as tf
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
+from tqdm.keras import TqdmCallback
+
 
 config_file = sys.argv[1]
 with open(config_file, 'r') as f:
@@ -32,21 +34,6 @@ linear_epochs = config['nn_settings']['linear_epochs']
 bilinear_epochs = config['nn_settings']['bilinear_epochs']
 pknn_epochs = config['nn_settings']['pknn_epochs']
 
-# class CustomLoss(tf.keras.losses.Loss):
-#     def __init__(self, time_step, **kwargs):
-#         super().__init__(**kwargs)
-#         self.time_step = time_step
-
-#     def call(self, y_true, y_pred):  
-   
-#         # # mse loss on psi
-#         # mse = tf.reduce_mean(tf.square(tf.norm(psi_next-psi_y, axis=-1))) / (self.time_step)**2
-
-#         # mse loss on psi
-#         self.mse = tf.square(tf.norm(y_true-y_pred, axis=-1)) / (self.time_step**2)
-#         return self.mse
-    
-# my_loss = CustomLoss(time_step=0.01)
 
 def load_data_and_train_models(mu, K_layer_size):
 
@@ -82,81 +69,101 @@ def load_data_and_train_models(mu, K_layer_size):
     model_pk.compile(optimizer=Adam(0.001),
                     loss='mse')
     
-    # model_pk.compile(optimizer=Adam(0.001),
-    #                 loss=my_loss)
 
-    lr_callbacks = tf.keras.callbacks.ReduceLROnPlateau(monitor='loss',
+
+    lr_callback = tf.keras.callbacks.ReduceLROnPlateau(monitor='loss',
                                                         factor=0.1,
-                                                        patience=200,
+                                                        patience=100,
                                                         verbose=0,
                                                         mode='auto',
-                                                        min_delta=0.0001,
+                                                        min_delta=1e-4,
                                                         cooldown=0,
                                                         min_lr=1e-6)
 
+    # Define the early stopping criteria
+    es_callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
+                                                    min_delta=1e-9,
+                                                    patience=50, 
+                                                    verbose=1, 
+                                                    mode='auto')
+
+    checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath=os.path.join(
+            weights_path, 'model_pk_vdpm_mu_'+str(mu)+'.h5'),
+            monitor='val_loss',
+            save_best_only=True,
+            save_weights_only=True,
+            mode='min',
+            save_freq='epoch')
+    
+    # Define the TqdmCallback for progress bar
+    tqdm_callback = TqdmCallback(verbose=1)
+
+    # Add early_stopping to the list of callbacks
+    callbacks = [lr_callback, es_callback, checkpoint_callback, tqdm_callback]
+
     history = model_pk.fit(x=[data_x, data_y, data_u],
-                        y=zeros_data_y_train,
-                        epochs=pknn_epochs,
-                        batch_size=200,
-                        callbacks=lr_callbacks,
-                        verbose=1)
+                    y=zeros_data_y_train,
+                    validation_split=0.2,
+                    epochs=pknn_epochs,
+                    batch_size=200,
+                    callbacks=callbacks,
+                    verbose=0)
 
-
-    model_pk.save_weights(os.path.join(
-        weights_path, 'model_pk_vdpm_mu_'+str(mu)+'.h5'))
-
+    
     # # Linear Model: Dynamics is $Az +Bu$
 
-    # dic_linear = PsiNN(layer_sizes=dict_layer_size, n_psi_train=n_psi_train)
+    dic_linear = PsiNN(layer_sizes=dict_layer_size, n_psi_train=n_psi_train)
 
-    # solver_linear = KoopmanLinearDLSolver(
-    #     dic=dic_linear, target_dim=target_dim, param_dim=param_dim, n_psi=n_psi)
+    solver_linear = KoopmanLinearDLSolver(
+        dic=dic_linear, target_dim=target_dim, param_dim=param_dim, n_psi=n_psi)
 
-    # model_linear = solver_linear.build_model()
+    model_linear = solver_linear.build_model()
 
-    # solver_linear.build(model_linear,
-    #                     data_x,
-    #                     data_u,
-    #                     data_y,
-    #                     zeros_data_y_train,
-    #                     epochs=linear_epochs,
-    #                     batch_size=200,
-    #                     lr=0.0001,
-    #                     log_interval=20,
-    #                     lr_decay_factor=0.1)
+    solver_linear.build(model_linear,
+                        data_x,
+                        data_u,
+                        data_y,
+                        zeros_data_y_train,
+                        epochs=linear_epochs,
+                        batch_size=200,
+                        lr=0.0001,
+                        lr_patience=100,
+                        lr_decay_factor=0.1,
+                        lr_min=1e-6,
+                        es_patience=50,
+                        es_min_delta=1e-9,
+                        filepath=os.path.join(
+                            weights_path, 'model_linear_vdpm_mu_'+str(mu)+'.h5'))
 
-    # model_linear.save_weights(os.path.join(
-    #     weights_path, 'model_linear_vdpm_mu_'+str(mu)+'.h5'))
 
 
     # # Bilinear Model: Dynamics is $Az + \sum_{i=1}^{N_{u}}B_{i}zu_{i}$
 
-    # dic_bilinear = PsiNN(layer_sizes=dict_layer_size, n_psi_train=n_psi_train)
+    dic_bilinear = PsiNN(layer_sizes=dict_layer_size, n_psi_train=n_psi_train)
 
-    # solver_bilinear = KoopmanBilinearDLSolver(
-    #     dic=dic_bilinear, target_dim=target_dim, param_dim=param_dim, n_psi=n_psi)
+    solver_bilinear = KoopmanBilinearDLSolver(
+        dic=dic_bilinear, target_dim=target_dim, param_dim=param_dim, n_psi=n_psi)
 
-    # model_bilinear = solver_bilinear.build_model()
+    model_bilinear = solver_bilinear.build_model()
 
-    # solver_bilinear.build(model_bilinear,
-    #                       data_x,
-    #                       data_u,
-    #                       data_y,
-    #                       zeros_data_y_train,
-    #                       epochs=linear_epochs,
-    #                       batch_size=200,
-    #                       lr=0.0001,
-    #                       log_interval=20,
-    #                       lr_decay_factor=0.1)
+    solver_bilinear.build(model_bilinear,
+                            data_x,
+                            data_u,
+                            data_y,
+                            zeros_data_y_train,
+                            epochs=bilinear_epochs,
+                            batch_size=200,
+                            lr=0.0001,
+                            lr_patience=100,
+                            lr_decay_factor=0.1,
+                            lr_min=1e-6,
+                            es_patience=50,
+                            es_min_delta=1e-9,
+                            filepath=os.path.join(
+                                weights_path, 'model_bilinear_vdpm_mu_'+str(mu)+'.h5'))
 
-    # model_bilinear.save_weights(os.path.join(
-    #     weights_path, 'model_bilinear_vdpm_mu_'+str(mu)+'.h5'))
 
-# for mu, K_layer_size in zip(mu_list, K_layer_size_list):
-#     load_data_and_train_models(mu, K_layer_size)
-#     print('mu = ', mu, 'done')
-#     print('K_layer_size = ', K_layer_size, 'done')
-
-load_data_and_train_models(mu=mu_list[0], K_layer_size=K_layer_size_list[0])
-print('mu = ', mu_list[0], 'done')
-print('K_layer_size = ', K_layer_size_list[0], 'done')
+for mu, K_layer_size in zip(mu_list, K_layer_size_list):
+    load_data_and_train_models(mu, K_layer_size)
+    print('mu = ', mu, 'done')
+    print('K_layer_size = ', K_layer_size, 'done')

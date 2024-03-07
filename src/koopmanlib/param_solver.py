@@ -154,6 +154,7 @@ class KoopmanLinearDLSolver(KoopmanParamDLGeneralSolver):
 
         history = model.fit(x=[data_x, data_u, data_y],
                             y=zeros_data_y_train,
+                            validation_split=0.2,
                             epochs=epochs,
                             batch_size=batch_size,
                             callbacks=lr_callbacks,
@@ -170,8 +171,12 @@ class KoopmanLinearDLSolver(KoopmanParamDLGeneralSolver):
             epochs,
             batch_size,
             lr,
-            log_interval,
-            lr_decay_factor):
+            lr_patience,
+            lr_decay_factor,
+            lr_min,
+            es_patience,
+            es_min_delta,
+            filepath):
         """Train Koopman model and calculate the final information,
         such as eigenfunctions, eigenvalues and K.
         For each outer training epoch, the koopman dictionary is trained
@@ -188,10 +193,18 @@ class KoopmanLinearDLSolver(KoopmanParamDLGeneralSolver):
         :type batch_size: int
         :param lr: learning rate
         :type lr: float
-        :param log_interval: the patience of learning decay
-        :type log_interval: int
+        :param lr_patience: the patience of learning decay
+        :type lr_patience: int
         :param lr_decay_factor: the ratio of learning decay
         :type lr_decay_factor: float
+        :param lr_min: the minimum learning rate
+        :type lr_min: float
+        :param es_patience: the patience of early stopping
+        :type es_patience: int
+        :param es_min_delta: the minimum delta of early stopping
+        :type es_min_delta: float
+        :param filepath: the path to save the best model
+        :type filepath: str
         """
 
         # Compile the Koopman DL model
@@ -201,6 +214,7 @@ class KoopmanLinearDLSolver(KoopmanParamDLGeneralSolver):
 
         # Training Loop
         losses = []
+        val_losses = []
         for i in range(epochs):
 
             # 10 steps for training PsiNN
@@ -209,7 +223,7 @@ class KoopmanLinearDLSolver(KoopmanParamDLGeneralSolver):
                                           data_u,
                                           data_y,
                                           zeros_data_y_train,
-                                          epochs=10,
+                                          epochs=1,
                                           batch_size=200)
             
             # One step for computing K
@@ -225,15 +239,28 @@ class KoopmanLinearDLSolver(KoopmanParamDLGeneralSolver):
             self.model.get_layer('Layer_B').weights[0].assign(self.B)
 
             print('number of the outer loop:', i)
-            if i % log_interval == 0:
-                losses.append(self.history.history['loss'][-1])
 
-                # Adjust learning rate:
-                if len(losses) > 2:
-                    if losses[-1] > losses[-2]:
-                        print("Error increased. Decay learning rate")
+            losses.append(self.history.history['loss'][-1])
+            val_losses.append(self.history.history['val_loss'][-1])
+
+            # Adjust learning rate:
+            if len(losses) > lr_patience:
+                if all(losses[i] > losses[i-1] for i in range(-1, -(lr_patience+1), -1)):
+                    print("Error increased. Decay learning rate")
+                    if curr_lr > lr_min:
                         curr_lr = lr_decay_factor * self.model.optimizer.lr
-                        self.model.optimizer.lr = curr_lr
+                        self.model.optimizer.lr = max(curr_lr, lr_min)
+
+            # Checkpoint for saving the best model
+            if len(val_losses) > 1:
+                if val_losses[-1] < min(val_losses[:-1]):
+                    self.model.save_weights(filepath) 
+
+            # Early stopping:
+            if len(val_losses) > es_patience:
+                if all(abs(val_losses[-1] - val_losses[i-1]) < es_min_delta  for i in range(-1, -(es_patience+1), -1)):
+                    print("Error increased over patience. Stop training")
+                    break
 
     def compute_data_list(self, traj_len, data_x_init, data_u):
         data_x_init = tf.reshape(data_x_init, shape=(1, -1))
@@ -331,6 +358,7 @@ class KoopmanBilinearDLSolver(KoopmanParamDLGeneralSolver):
 
         history = model.fit(x=[data_x, data_u, data_y],
                             y=zeros_data_y_train,
+                            validation_split=0.2,
                             epochs=epochs,
                             batch_size=batch_size,
                             callbacks=lr_callbacks,
@@ -347,8 +375,12 @@ class KoopmanBilinearDLSolver(KoopmanParamDLGeneralSolver):
             epochs,
             batch_size,
             lr,
-            log_interval,
-            lr_decay_factor):
+            lr_patience,
+            lr_decay_factor,
+            lr_min,
+            es_patience,
+            es_min_delta,
+            filepath):
         """Train Koopman model and calculate the final information,
         such as eigenfunctions, eigenvalues and K.
         For each outer training epoch, the koopman dictionary is trained
@@ -365,10 +397,18 @@ class KoopmanBilinearDLSolver(KoopmanParamDLGeneralSolver):
         :type batch_size: int
         :param lr: learning rate
         :type lr: float
-        :param log_interval: the patience of learning decay
-        :type log_interval: int
+        :param lr_patience: the patience of learning decay
+        :type lr_patience: int
         :param lr_decay_factor: the ratio of learning decay
         :type lr_decay_factor: float
+        :param lr_min: the minimum learning rate
+        :type lr_min: float
+        :param es_patience: the patience of early stopping
+        :type es_patience: int
+        :param es_min_delta: the minimum delta of early stopping
+        :type es_min_delta: float
+        :param filepath: the path to save the best model
+        :type filepath: str
         """
 
         # Compile the Koopman DL model
@@ -378,6 +418,7 @@ class KoopmanBilinearDLSolver(KoopmanParamDLGeneralSolver):
 
         # Training Loop
         losses = []
+        val_losses = []
         for i in range(epochs):
             
             # 10 steps for training PsiNN
@@ -386,7 +427,7 @@ class KoopmanBilinearDLSolver(KoopmanParamDLGeneralSolver):
                                           data_u,
                                           data_y,
                                           zeros_data_y_train,
-                                          epochs=10,
+                                          epochs=1,
                                           batch_size=200)
             
             # One step for computing K
@@ -402,15 +443,38 @@ class KoopmanBilinearDLSolver(KoopmanParamDLGeneralSolver):
             self.model.get_layer('Layer_B').weights[0].assign(self.B)
 
             print('number of the outer loop:', i)
-            if i % log_interval == 0:
-                losses.append(self.history.history['loss'][-1])
+            # if i % log_interval == 0:
+            #     losses.append(self.history.history['loss'][-1])
 
-                # Adjust learning rate:
-                if len(losses) > 2:
-                    if losses[-1] > losses[-2]:
-                        print("Error increased. Decay learning rate")
+            #     # Adjust learning rate:
+            #     if len(losses) > 2:
+            #         if losses[-1] > losses[-2]:
+            #             print("Error increased. Decay learning rate")
+            #             curr_lr = lr_decay_factor * self.model.optimizer.lr
+            #             self.model.optimizer.lr = curr_lr
+
+
+            losses.append(self.history.history['loss'][-1])
+            val_losses.append(self.history.history['val_loss'][-1])
+
+            # Adjust learning rate:
+            if len(losses) > lr_patience:
+                if all(losses[i] > losses[i-1] for i in range(-1, -(lr_patience+1), -1)):
+                    print("Error increased. Decay learning rate")
+                    if curr_lr > lr_min:
                         curr_lr = lr_decay_factor * self.model.optimizer.lr
-                        self.model.optimizer.lr = curr_lr
+                        self.model.optimizer.lr = max(curr_lr, lr_min)
+
+            # Checkpoint for saving the best model
+            if len(val_losses) > 1:
+                if val_losses[-1] < min(val_losses[:-1]):
+                    self.model.save_weights(filepath)           
+
+            # Early stopping:
+            if len(val_losses) > es_patience:
+                if all(abs(val_losses[-1] - val_losses[i-1]) < es_min_delta  for i in range(-1, -(es_patience+1), -1)):
+                    print("Error increased over patience. Stop training")
+                    break
 
     def compute_data_list(self, traj_len, data_x_init, data_u):
         data_x_init = tf.reshape(data_x_init, shape=(1, -1))
@@ -541,8 +605,10 @@ class KoopmanActuatedDLSolver(KoopmanParamDLGeneralSolver):
             epochs,
             batch_size,
             lr,
-            log_interval,
-            lr_decay_factor):
+            lr_patience,
+            lr_decay_factor,
+            es_patience,
+            es_min_delta):
         """Train Koopman model and calculate the final information,
         such as eigenfunctions, eigenvalues and K.
         For each outer training epoch, the koopman dictionary is trained
@@ -559,10 +625,14 @@ class KoopmanActuatedDLSolver(KoopmanParamDLGeneralSolver):
         :type batch_size: int
         :param lr: learning rate
         :type lr: float
-        :param log_interval: the patience of learning decay
-        :type log_interval: int
+        :param lr_patience: the patience of learning decay
+        :type lr_patience: int
         :param lr_decay_factor: the ratio of learning decay
         :type lr_decay_factor: float
+        :param es_patience: the patience of early stopping
+        :type es_patience: int
+        :param es_min_delta: the minimum delta of early stopping
+        :type es_min_delta: float
         """
 
         # Compile the Koopman DL model
@@ -571,6 +641,7 @@ class KoopmanActuatedDLSolver(KoopmanParamDLGeneralSolver):
 
         # Training Loop
         losses = []
+        val_losses = []
         for i in range(epochs):
             # One step for computing K
             self.Ks = self.compute_Ks(self.dic_func,
@@ -586,19 +657,28 @@ class KoopmanActuatedDLSolver(KoopmanParamDLGeneralSolver):
                                           data_u,
                                           data_y,
                                           zeros_data_y_train,
-                                          epochs=10,
+                                          epochs=2,
                                           batch_size=200)
 
             print('number of the outer loop:', i)
-            if i % log_interval == 0:
-                losses.append(self.history.history['loss'][-1])
+            
+            losses.append(self.history.history['loss'][-1])
+            val_losses.append(self.history.history['val_loss'][-1])
 
-                # Adjust learning rate:
-                if len(losses) > 2:
-                    if losses[-1] > losses[-2]:
-                        print("Error increased. Decay learning rate")
-                        curr_lr = lr_decay_factor * self.model.optimizer.lr
-                        self.model.optimizer.lr = curr_lr
+            # Adjust learning rate:
+            if len(losses) > lr_patience:
+                if all(losses[i] > losses[i-1] for i in range(-1, -(lr_patience+1), -1)):
+                    print("Error increased. Decay learning rate")
+                    curr_lr = lr_decay_factor * self.model.optimizer.lr
+                    self.model.optimizer.lr = curr_lr
+
+            # Early stopping:
+            if len(val_losses) > es_patience:
+                if all(abs(val_losses[-1] - val_losses[i-1]) < es_min_delta  for i in range(-1, -(es_patience+1), -1)):
+                    print("Error increased over patience. Stop training")
+                    break
+  
+                        
 
     def opt_rbf_model(
             self,

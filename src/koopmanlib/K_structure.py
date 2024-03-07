@@ -44,7 +44,7 @@ class Model_K_u_Layer_One(Layer):
         self.n_psi = n_psi
         self.layer_sizes = layer_sizes
         self.hidden_layers = [Dense(s, activation=activation) for s in layer_sizes]
-        self.output_layer = Dense(self.n_psi*(n_psi-1)) # no activation functions
+        self.output_layer = Dense(self.n_psi*(n_psi-1), name='K_Dense_Output') # no activation functions
        
 
     def call(self, inputs):
