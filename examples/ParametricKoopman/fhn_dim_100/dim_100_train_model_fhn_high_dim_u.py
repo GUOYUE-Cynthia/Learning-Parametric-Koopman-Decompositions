@@ -11,7 +11,7 @@ from koopmanlib.dictionary import PsiNN
 from koopmanlib.param_solver import KoopmanActuatedDLSolver, KoopmanParametricDLSolver
 from koopmanlib.target import ModifiedFHNTarget
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 from tqdm.keras import TqdmCallback
 

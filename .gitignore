@@ -8,4 +8,5 @@
 **/*_results*/data/
 **/*_results*/weights/
 /.vscode
-/pknn_env
+/pknn
+/pknn_test
