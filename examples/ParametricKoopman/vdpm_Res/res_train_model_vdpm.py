@@ -27,7 +27,7 @@ data_path = config["data_settings"]["data_path"]
 weights_path = config["nn_settings"]["weights_path"]
 
 n_psi_train = config["nn_settings"]["n_psi_train"]
-mu_list = config["data_settings"]["mu"]
+
 
 target_dim = 2
 param_dim = 1
@@ -40,6 +40,11 @@ K_layer_size_list = config["nn_settings"]["K_layer_size"]
 linear_epochs = config["nn_settings"]["linear_epochs"]
 bilinear_epochs = config["nn_settings"]["bilinear_epochs"]
 pknn_epochs = config["nn_settings"]["pknn_epochs"]
+
+mu_list = config["data_settings"]["mu"]
+
+mu_list = [mu_list[0]]
+K_layer_size_list = [K_layer_size_list[0]]
 
 loss_dict = {}
 
@@ -211,5 +216,5 @@ for mu, losses in loss_dict.items():
 df = pd.DataFrame(data, columns=['mu', 'loss_pk', 'val_loss_pk', 'loss_linear', 'val_loss_linear', 'loss_bilinear', 'val_loss_bilinear'])
 
 # Save the DataFrame to a CSV file
-df.to_csv('losses_vdpm.csv', index=False)
+df.to_csv('mu_losses_vdpm.csv', index=False)
 

@@ -131,13 +131,24 @@ class KoopmanDLSolver(KoopmanGeneralSolver):
             x=self.data_train,
             y=self.zeros_data_y_train,
             epochs=epochs,
-            validation_data=(self.data_valid, self.zeros_data_y_valid),
+            validation_split=0.2,
             batch_size=self.batch_size,
             verbose=1,
         )
         return history
 
-    def build(self, data_train, data_valid, epochs, batch_size, lr, log_interval, lr_decay_factor):
+    def build(self,
+                data_train,
+                data_valid, 
+                epochs, 
+                batch_size=1000, 
+                lr=1e-4,
+                lr_min=1e-8,
+                lr_patience=20,
+                lr_decay_factor=0.8,
+                es_patience=50,
+                es_min_delta=1e-8,
+                filepath=None):
         """Train Koopman model and calculate the final information, such as eigenfunctions,
         eigenvalues and K. For each outer training epoch, the koopman dictionary is trained by
         several times (inner training epochs), and then compute matrix K. Iterate the outer
@@ -175,7 +186,8 @@ class KoopmanDLSolver(KoopmanGeneralSolver):
         self.model.compile(optimizer=opt, loss="mse")
 
         # Training Loop
-        losses = []
+        self.losses = []
+        self.val_losses = []
         for i in range(epochs):
             # One step for computing K
             self.K = self.compute_K(self.dic_func, self.data_x_train, self.data_y_train, self.reg)
@@ -185,15 +197,37 @@ class KoopmanDLSolver(KoopmanGeneralSolver):
             self.history = self.train_psi(self.model, epochs=2)
 
             print("number of the outer loop:", i)
-            if i % log_interval == 0:
-                losses.append(self.history.history["loss"][-1])
 
-                # Adjust learning rate:
-                if len(losses) > 2:
-                    if losses[-1] > losses[-2]:
-                        print("Error increased. Decay learning rate")
+            self.losses.append(self.history.history["loss"][-1])
+            self.val_losses.append(self.history.history["val_loss"][-1])
+
+            # Adjust learning rate:
+            if len(self.losses) > lr_patience:
+                if all(self.losses[i] > self.losses[i - 1] for i in range(-1, -(lr_patience + 1), -1)):
+                    print("Error increased. Decay learning rate")
+                    if curr_lr > lr_min:
                         curr_lr = lr_decay_factor * self.model.optimizer.lr
-                        self.model.optimizer.lr = curr_lr
+                        self.model.optimizer.lr = max(curr_lr, lr_min)
+
+            # Checkpoint for saving the best model
+            if len(self.val_losses) > 1:
+                if self.val_losses[-1] < min(self.val_losses[:-1]):
+                    self.loss_best_model = self.losses[-1]
+                    self.val_loss_best_model = self.val_losses[-1]
+                    self.model.save_weights(filepath)
+
+            # Early stopping:
+            if len(self.val_losses) > es_patience:
+                if all(
+                    abs(self.val_losses[-1] - self.val_losses[i - 1]) < es_min_delta
+                    for i in range(-1, -(es_patience + 1), -1)
+                ):
+                    print("Error increased over patience. Stop training")
+                    break
 
         # Compute final information
         self.compute_final_info(reg_final=0.01)
+
+
+
+

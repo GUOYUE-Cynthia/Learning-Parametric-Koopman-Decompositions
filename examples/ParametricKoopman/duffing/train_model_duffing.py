@@ -88,10 +88,12 @@ for n_traj_per_param in n_traj_per_param_list:
     #                  epochs=edmd_epochs,
     #                  batch_size=1000,
     #                  lr=1e-4,
-    #                  log_interval=20,
-    #                  lr_decay_factor=0.8)
-
-    #     solver.model.save_weights(os.path.join(weights_path, 'edmd_duffing_weights_data_'+str(
+    #                  lr_min=1e-8,
+    #                 lr_patience=20,
+    #                 lr_decay_factor=0.8,
+    #                 es_patience=50,
+    #                 es_min_delta=1e-8,
+    #                 filepath=os.path.join(weights_path, 'edmd_duffing_weights_data_'+str(
     #         i)+'_n_traj_per_param_'+str(n_traj_per_param)+'_n_param_'+str(n_param)+'.h5'))
 
     # Train PK-NN
@@ -175,8 +177,8 @@ for n_traj_per_param in n_traj_per_param_list:
         y=zeros_data_y_train,
         epochs=pknn_epochs,
         batch_size=200,
-        validation_split=0.2,
-        callbacks=[lr_callback, es_callback, tqdm_callback, checkpoint_callback],
+        validation_split=0.01,
+        callbacks=[lr_callback, tqdm_callback, checkpoint_callback],
         verbose=0,
     )
 

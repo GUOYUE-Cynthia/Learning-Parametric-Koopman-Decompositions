@@ -63,77 +63,79 @@ fhn_pde = ModifiedFHNTarget(
     x=x, dt=1e-5, t_step=1e-3, dim=target_dim, param_dim=param_dim, param_input=1e3
 )
 
-# Build model
+# # Build model
 
 
-dic_pk = PsiNN(layer_sizes=dict_layer_size, n_psi_train=n_psi_train)
+# dic_pk = PsiNN(layer_sizes=dict_layer_size, n_psi_train=n_psi_train)
 
-from koopmanlib.K_structure import Model_K_u_Layer_One, Model_ResNet_K_u_Layer_One
+# from koopmanlib.K_structure import Model_K_u_Layer_One, Model_ResNet_K_u_Layer_One
 
-model_K_u = Model_ResNet_K_u_Layer_One(layer_sizes=K_layer_size, n_psi=n_psi)
+# model_K_u = Model_K_u_Layer_One(layer_sizes=K_layer_size, n_psi=n_psi)
 
-solver_pk = KoopmanParametricDLSolver(
-    target_dim=target_dim, param_dim=param_dim, n_psi=n_psi, dic=dic_pk, model_K_u=model_K_u
-)
+# solver_pk = KoopmanParametricDLSolver(
+#     target_dim=target_dim, param_dim=param_dim, n_psi=n_psi, dic=dic_pk, model_K_u=model_K_u
+# )
 
-model_pk, model_K_u_pred_pk = solver_pk.generate_model()
+# model_pk, model_K_u_pred_pk = solver_pk.generate_model()
 
-model_pk.summary()
+# model_pk.summary()
 
-model_pk.compile(optimizer=Adam(0.001), loss="mse")
+# model_pk.compile(optimizer=Adam(0.001), loss="mse")
 
-lr_callback = tf.keras.callbacks.ReduceLROnPlateau(
-    monitor="loss",
-    factor=0.8,
-    patience=150,
-    verbose=0,
-    mode="auto",
-    min_delta=0.0001,
-    cooldown=0,
-    min_lr=1e-7,
-)
+# lr_callback = tf.keras.callbacks.ReduceLROnPlateau(
+#     monitor="loss",
+#     factor=0.8,
+#     patience=150,
+#     verbose=0,
+#     mode="auto",
+#     min_delta=0.0001,
+#     cooldown=0,
+#     min_lr=1e-7,
+# )
 
-# # Define the early stopping criteria
-# es_callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
-#                                                 min_delta=1e-12,
-#                                                 patience=100,
-#                                                 verbose=1,
-#                                                 mode='auto')
+# # # Define the early stopping criteria
+# # es_callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
+# #                                                 min_delta=1e-12,
+# #                                                 patience=100,
+# #                                                 verbose=1,
+# #                                                 mode='auto')
 
-tqdm_callback = TqdmCallback(verbose=1)
+# tqdm_callback = TqdmCallback(verbose=1)
 
-checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-    filepath=os.path.join(
-        weights_path, "norm_high_u_psi_" + str(n_psi_train) + "_model_pk_fhn_Nx_" + str(Nx) + ".h5"
-    ),
-    monitor="val_loss",
-    save_best_only=True,
-    save_weights_only=True,
-    mode="min",
-    save_freq="epoch",
-)
+# checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+#     filepath=os.path.join(
+#         weights_path, "norm_high_u_psi_" + str(n_psi_train) + "_model_pk_fhn_Nx_" + str(Nx) + ".h5"
+#     ),
+#     monitor="val_loss",
+#     save_best_only=True,
+#     save_weights_only=True,
+#     mode="min",
+#     save_freq="epoch",
+# )
 
-zeros_data_z_next_train = tf.zeros_like(dic_pk(data_z_next))
+# zeros_data_z_next_train = tf.zeros_like(dic_pk(data_z_next))
 
-history_pk = model_pk.fit(
-    x=[z_curr_normalized, z_next_normalized, data_u],
-    y=zeros_data_z_next_train,
-    epochs=pknn_epochs,
-    batch_size=pknn_epochs,
-    validation_split=0.2,
-    callbacks=[lr_callback, checkpoint_callback, tqdm_callback],
-    verbose=0,
-)
+# history_pk = model_pk.fit(
+#     x=[z_curr_normalized, z_next_normalized, data_u],
+#     y=zeros_data_z_next_train,
+#     epochs=pknn_epochs,
+#     batch_size=pknn_epochs,
+#     validation_split=0.2,
+#     callbacks=[lr_callback, checkpoint_callback, tqdm_callback],
+#     verbose=0,
+# )
 
-training_loss = history_pk.history['loss']
-validation_loss = history_pk.history['val_loss']
-best_epoch = validation_loss.index(min(validation_loss))
-best_loss_pk = training_loss[best_epoch]
-best_val_loss_pk = validation_loss[best_epoch]
+# training_loss = history_pk.history['loss']
+# validation_loss = history_pk.history['val_loss']
+# best_epoch = validation_loss.index(min(validation_loss))
+# best_loss_pk = training_loss[best_epoch]
+# best_val_loss_pk = validation_loss[best_epoch]
 
 
 # Build Dl + Polynomial K
 dic_dl_polyK = PsiNN(layer_sizes=dict_layer_size, n_psi_train=n_psi_train)
+
+zeros_data_z_next_train = tf.zeros_like(dic_dl_polyK(data_z_next))
 
 solver_dl_polyK = KoopmanActuatedDLSolver(dic=dic_dl_polyK,
                                           target_dim=target_dim,
@@ -159,20 +161,20 @@ solver_dl_polyK.opt_nn_model(data_x=z_curr_normalized,
 
 
 
-loss_dict = {
-    "loss_pk": best_loss_pk,
-    "val_loss_pk": best_val_loss_pk,
-    "loss_dl_polyK": solver_dl_polyK.loss_best_model,
-    "val_loss_dl_polyK": solver_dl_polyK.val_loss_best_model
-}
+# loss_dict = {
+#     "loss_pk": best_loss_pk,
+#     "val_loss_pk": best_val_loss_pk,
+#     "loss_dl_polyK": solver_dl_polyK.loss_best_model,
+#     "val_loss_dl_polyK": solver_dl_polyK.val_loss_best_model
+# }
 
-import pandas as pd
+# import pandas as pd
 
-# Convert the dictionary to a DataFrame
-df = pd.DataFrame([loss_dict])
+# # Convert the dictionary to a DataFrame
+# df = pd.DataFrame([loss_dict])
 
-# # Alternatively, if you want specific column ordering you can specify columns like so:
-# df = pd.DataFrame([data_dict], columns=['loss_pk', 'val_loss_pk', 'loss_dl_polyK', 'val_loss_dl_polyK'])
+# # # Alternatively, if you want specific column ordering you can specify columns like so:
+# # df = pd.DataFrame([data_dict], columns=['loss_pk', 'val_loss_pk', 'loss_dl_polyK', 'val_loss_dl_polyK'])
 
-# Save the DataFrame to a CSV file
-df.to_csv('loss_values_fhn_high_dim_u.csv', index=False)
+# # Save the DataFrame to a CSV file
+# df.to_csv('dim_100_loss_values_fhn_high_dim_u.csv', index=False)

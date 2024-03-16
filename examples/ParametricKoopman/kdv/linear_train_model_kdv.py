@@ -13,12 +13,14 @@ from koopmanlib.param_solver import (
     KoopmanParametricDLSolver,
 )
 
+from tqdm.keras import TqdmCallback
+
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 
 config_file = sys.argv[1]
 with open(config_file) as f:
-    config = json.load(f)
+    config = json.load(f)["linear"]
 
 data_path = config["data_settings"]["data_path"]
 weights_path = config["nn_settings"]["weights_path"]
@@ -53,9 +55,9 @@ data_u = dict_data[()]["data_u"]
 
 # PK-NN
 dic_pk = PsiNN_obs(layer_sizes=dict_layer_size, n_psi_train=n_psi_train, dx=dx)
-from koopmanlib.K_structure import Model_K_u_Layer
+from koopmanlib.K_structure import Model_K_u_Layer_One
 
-model_K_u = Model_K_u_Layer(layer_sizes=K_layer_size, n_psi=n_psi)
+model_K_u = Model_K_u_Layer_One(layer_sizes=K_layer_size, n_psi=n_psi, activation="relu")
 
 solver_pk = KoopmanParametricDLSolver(
     target_dim=target_dim, param_dim=param_dim, n_psi=n_psi, dic=dic_pk, model_K_u=model_K_u
@@ -69,7 +71,7 @@ zeros_data_y_train = tf.zeros_like(dic_pk(data_y))
 
 model_pk.compile(optimizer=Adam(0.001), loss="mse")
 
-lr_callbacks = tf.keras.callbacks.ReduceLROnPlateau(
+lr_callback = tf.keras.callbacks.ReduceLROnPlateau(
     monitor="loss",
     factor=0.1,
     patience=50,
@@ -79,18 +81,37 @@ lr_callbacks = tf.keras.callbacks.ReduceLROnPlateau(
     cooldown=0,
     min_lr=1e-12,
 )
+checkpoint_path = os.path.join(weights_path, "pk_kdv_weights_" + forcing_type + ".h5")
+checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+        filepath=checkpoint_path,
+        monitor="val_loss",
+        save_best_only=True,
+        save_weights_only=True,
+        mode="min",
+        save_freq="epoch",
+    )
 
-history = model_pk.fit(
+# Define the TqdmCallback for progress bar
+tqdm_callback = TqdmCallback(verbose=1)
+
+callbacks = [lr_callback, checkpoint_callback, tqdm_callback]
+
+history_pk = model_pk.fit(
     x=[data_x, data_y, data_u],
     y=zeros_data_y_train,
-    epochs=pknn_epochs,
-    batch_size=200,
-    callbacks=lr_callbacks,
-    verbose=1,
-)
+    validation_split=0.2,
+        epochs=pknn_epochs,
+        batch_size=200,
+        callbacks=callbacks,
+        verbose=0
+    )
 
+training_loss = history_pk.history['loss']
+validation_loss = history_pk.history['val_loss']
+best_epoch = validation_loss.index(min(validation_loss))
+best_loss_pk = training_loss[best_epoch]
+best_val_loss_pk = validation_loss[best_epoch]
 
-model_pk.save_weights(os.path.join(weights_path, "pk_kdv_weights_" + forcing_type + ".h5"))
 
 # Linear Model: Dynamics is $Az +Bu$
 
@@ -100,7 +121,7 @@ solver_linear = KoopmanLinearDLSolver(
     dic=dic_linear, target_dim=target_dim, param_dim=param_dim, n_psi=n_psi
 )
 
-model_linear = solver_linear.build_model()
+model_linear, model_K_u_pred_linear = solver_linear.build_model()
 
 solver_linear.build(
     model_linear,
@@ -111,11 +132,15 @@ solver_linear.build(
     epochs=linear_epochs,
     batch_size=200,
     lr=0.0001,
-    log_interval=20,
+    lr_patience=100,
     lr_decay_factor=0.1,
-)
+    lr_min=1e-10,
+    es_patience=50,
+    es_min_delta=1e-9,
+    filepath=os.path.join(weights_path, "linear_kdv_weights_" + forcing_type + ".h5"))
 
-model_linear.save_weights(os.path.join(weights_path, "linear_kdv_weights_" + forcing_type + ".h5"))
+best_loss_linear = solver_linear.loss_best_model
+best_val_loss_linear = solver_linear.val_loss_best_model
 
 
 # Bilinear Model: Dynamics is $Az + \sum_{i=1}^{N_{u}}B_{i}zu_{i}$
@@ -126,7 +151,7 @@ solver_bilinear = KoopmanBilinearDLSolver(
     dic=dic_bilinear, target_dim=target_dim, param_dim=param_dim, n_psi=n_psi
 )
 
-model_bilinear = solver_bilinear.build_model()
+model_bilinear, model_K_u_pred_bilinear = solver_bilinear.build_model()
 
 solver_bilinear.build(
     model_bilinear,
@@ -137,10 +162,29 @@ solver_bilinear.build(
     epochs=linear_epochs,
     batch_size=200,
     lr=0.0001,
-    log_interval=20,
+    lr_patience=100,
     lr_decay_factor=0.1,
+    lr_min=1e-10,
+    es_patience=50,
+    es_min_delta=1e-9,
+    filepath=os.path.join(weights_path, "bilinear_kdv_weights_" + forcing_type + ".h5")
 )
 
-model_bilinear.save_weights(
-    os.path.join(weights_path, "bilinear_kdv_weights_" + forcing_type + ".h5")
-)
+best_loss_bilinear = solver_bilinear.loss_best_model
+best_val_loss_bilinear = solver_bilinear.val_loss_best_model
+
+
+loss_dict = {'loss_pk': best_loss_pk,
+             'val_loss_pk': best_val_loss_pk, 
+             'loss_linear': best_loss_linear, 
+             'val_loss_linear': best_val_loss_linear, 
+             'loss_bilinear': best_loss_bilinear, 
+             'val_loss_bilinear': best_val_loss_bilinear}
+
+import pandas as pd
+
+# Convert the dictionary to a DataFrame
+df = pd.DataFrame([loss_dict])
+
+# Save the DataFrame to a CSV file
+df.to_csv('loss_values_kdv'+str(forcing_type)+'.csv', index=False)

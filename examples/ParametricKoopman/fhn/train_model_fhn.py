@@ -67,9 +67,9 @@ fhn_pde = FitzHughNagumoTarget(
 
 dic_pk = PsiNN(layer_sizes=dict_layer_size, n_psi_train=n_psi_train)
 
-from koopmanlib.K_structure import Model_K_u_Layer_One, Model_ResNet_K_u_Layer_One
+from koopmanlib.K_structure import Model_K_u_Layer_One
 
-model_K_u = Model_ResNet_K_u_Layer_One(layer_sizes=K_layer_size, n_psi=n_psi)
+model_K_u = Model_K_u_Layer_One(layer_sizes=K_layer_size, n_psi=n_psi)
 
 solver_pk = KoopmanParametricDLSolver(
     target_dim=target_dim, param_dim=param_dim, n_psi=n_psi, dic=dic_pk, model_K_u=model_K_u

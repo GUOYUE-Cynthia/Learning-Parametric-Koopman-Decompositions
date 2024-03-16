@@ -70,7 +70,7 @@ dic_pk = PsiNN(layer_sizes=dict_layer_size, n_psi_train=n_psi_train)
 
 from koopmanlib.K_structure import Model_K_u_Layer_One, Model_ResNet_K_u_Layer_One
 
-model_K_u = Model_ResNet_K_u_Layer_One(layer_sizes=K_layer_size, n_psi=n_psi)
+model_K_u = Model_K_u_Layer_One(layer_sizes=K_layer_size, n_psi=n_psi)
 
 solver_pk = KoopmanParametricDLSolver(
     target_dim=target_dim, param_dim=param_dim, n_psi=n_psi, dic=dic_pk, model_K_u=model_K_u
@@ -170,9 +170,6 @@ import pandas as pd
 
 # Convert the dictionary to a DataFrame
 df = pd.DataFrame([loss_dict])
-
-# # Alternatively, if you want specific column ordering you can specify columns like so:
-# df = pd.DataFrame([data_dict], columns=['loss_pk', 'val_loss_pk', 'loss_dl_polyK', 'val_loss_dl_polyK'])
 
 # Save the DataFrame to a CSV file
 df.to_csv('loss_values_fhn_high_dim_u.csv', index=False)
