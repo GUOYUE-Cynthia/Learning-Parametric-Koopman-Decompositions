@@ -23,7 +23,7 @@
             },
             "nn_settings": {
             "weights_path": "fhn_dim_100_results/weights",
-            "n_psi_train": 50,
+            "n_psi_train": 30,
             "dict_layer_size": [128,128],
             "K_layer_size": [64],
             "polyK_epochs": 500,
