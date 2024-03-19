@@ -1,9 +1,9 @@
 
 
-
 {"linear":{
     "data_settings": {
         "data_path": "kdv_results/data",
+        "figures_path": "kdv_results/figures",
         "n_traj":100,
         "traj_len": 500,
         "Nx": 128,
@@ -22,6 +22,7 @@
 "sin":{
     "data_settings": {
         "data_path": "kdv_results/data",
+        "figures_path": "kdv_results/figures",
         "n_traj":100,
         "traj_len": 500,
         "Nx": 128,

@@ -1,6 +1,7 @@
 {"fhn_settings":
         {"data_settings": {
             "data_path": "fhn_results/data",
+            "figures_path":"fhn_results/figures",
             "n_traj":100,
             "traj_len": 500,
             "Nx":10
