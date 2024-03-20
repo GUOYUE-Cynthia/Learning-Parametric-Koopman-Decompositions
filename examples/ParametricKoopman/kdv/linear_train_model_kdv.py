@@ -159,7 +159,7 @@ solver_bilinear.build(
     data_u,
     data_y,
     zeros_data_y_train,
-    epochs=linear_epochs,
+    epochs=bilinear_epochs,
     batch_size=200,
     lr=0.0001,
     lr_patience=100,

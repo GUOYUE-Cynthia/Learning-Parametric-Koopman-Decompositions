@@ -19,7 +19,7 @@ from tqdm.keras import TqdmCallback
 from koopmanlib.K_structure import Model_K_u_Layer, Model_K_u_Layer_One
 
 from sklearn.model_selection import train_test_split, KFold
-from sklearn.metrics import accuracy_score
+
 
 config_file = sys.argv[1]
 with open(config_file) as f:
@@ -37,18 +37,19 @@ n_traj_per_param_list = config["data_settings"]["n_traj_per_param"]
 
 results = []
 
+index = 2
+
 # for n_traj_per_param in n_traj_per_param_list:
-n_traj_per_param = n_traj_per_param_list[2]
+n_traj_per_param = n_traj_per_param_list[index]
 
 # Number of choices of parameters
 n_param = int(n_total_data / n_traj_per_param)
 traj_len = config["data_settings"]["traj_len"]
-n_psi_train = config["nn_settings"]["n_psi_train"]
+# n_psi_train = config["nn_settings"]["n_psi_train"]
 
 target_dim = 2
 param_dim = 3
 
-n_psi = 1 + target_dim + n_psi_train
 
 # Train PK-NN
 # Load data
@@ -75,14 +76,18 @@ data_u = dict_data[()]["data_u"]
 # print('data_y shape = ', data_y.shape)
 # print('data_u shape = ', data_u.shape)
 
-n_splits = 3
+n_splits = 10
 kf = KFold(n_splits=n_splits)
 
-dict_layer_size_list = [[50,50,50], [100,100,100], [200,200,200]]
+dict_layer_size = config["nn_settings"]['dict_layer_size']
 
-K_layer_size_list = [[256,256,256], [256,256,256], [256,256,256]]
+K_layer_size = config["nn_settings"]["K_layer_size"]
 
-for dict_layer_size, K_layer_size in zip(dict_layer_size_list, K_layer_size_list):
+n_psi_train_list = [1,5,10,15,20,22,25]
+
+for n_psi_train in n_psi_train_list:
+
+    n_psi = 1 + target_dim + n_psi_train
 
     losses = []
 
@@ -141,16 +146,17 @@ for dict_layer_size, K_layer_size in zip(dict_layer_size_list, K_layer_size_list
 
     mean_loss = np.mean(losses)
     results.append({
+        'n_psi_train': n_psi_train,
         'n_traj_per_param': n_traj_per_param,
         'dict_layer_size': dict_layer_size,
         'K_layer_size': K_layer_size,
         'mean_loss': mean_loss
     })
 
-print("Finished training for n_traj_per_param = ", n_traj_per_param, "n_param = ", n_param)
+    print("Finished training for n_psi_train = ", n_psi_train)
 
-csv_file = "2_cv_duffing_mse_results.csv"
-csv_columns = ['n_traj_per_param', 'dict_layer_size', 'K_layer_size', 'mean_loss']
+csv_file = str(index)+'_cv_duffing_mse_results.csv'
+csv_columns = ['n_psi_train', 'n_traj_per_param', 'dict_layer_size', 'K_layer_size', 'mean_loss']
 
 try:
     with open(csv_file, 'w', newline='') as csvfile:

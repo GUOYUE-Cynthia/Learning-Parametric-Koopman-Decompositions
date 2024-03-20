@@ -19,8 +19,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 from tqdm.keras import TqdmCallback
 
-# config_file = sys.argv[1]
-config_file = "/home/guoyue/Learning-Parametric-Koopman-Decompositions/examples/ParametricKoopman/vdpm/config_vdpm.json"
+config_file = sys.argv[1]
 with open(config_file) as f:
     config = json.load(f)
 
