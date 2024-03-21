@@ -18,35 +18,85 @@ def plot_pde(x_axis, y_axis, data, Nx):
     ax2.set_ylabel("time")
     ax2.set_title("$w$")
 
-
-def plot_pde_comparison(x_axis, y_axis, data_true, data_pred, Nx):
+def plot_pde_comparison(x_axis, y_axis, data_list, data_label_list, Nx, figsize, cbar_ax):
     X, Y = np.meshgrid(x_axis, y_axis)
-    fig, axs = plt.subplots(2, 2, figsize=(16, 12))
-    ax1, ax2, ax3, ax4 = axs[0, 0], axs[0, 1], axs[1, 0], axs[1, 1]
-    c1 = ax1.pcolormesh(X, Y, data_true[:, :Nx])
-    fig.colorbar(c1, ax=ax1)
-    ax1.set_xlabel("space")
-    ax1.set_ylabel("time")
-    # ax1.set_ylim(bottom=0, top=20)
-    ax1.set_title("$v$ (true)")
+    fig, axs = plt.subplots(2, len(data_list), figsize=figsize)  # Adjust the figure size as needed
+    # Determine global min and max values for setting a unified color scale
+    global_min_v = min(data[:, :Nx].min() for data in data_list)
+    global_max_v = max(data[:, :Nx].max() for data in data_list)
+    global_min_w = min(data[:, Nx:].min() for data in data_list)
+    global_max_w = max(data[:, Nx:].max() for data in data_list)
 
-    c2 = ax2.pcolormesh(X, Y, data_pred[:, :Nx])
-    fig.colorbar(c2, ax=ax2)
-    ax2.set_xlabel("space")
-    ax2.set_ylabel("time")
-    ax2.set_title("$v$ (prediction)")
+    # Set larger font sizes
+    axis_label_fontsize = 14  # Adjust as needed
+    title_fontsize = 16  # Adjust as needed
 
-    c3 = ax3.pcolormesh(X, Y, data_true[:, Nx:])
-    fig.colorbar(c3, ax=ax3)
-    ax3.set_xlabel("space")
-    ax3.set_ylabel("time")
-    ax3.set_title("$w$ (true)")
+    for idx, (data, label) in enumerate(zip(data_list, data_label_list)):
+        # Plot v values with a unified color scale
+        c1 = axs[0, idx].pcolormesh(X, Y, data[:, :Nx], vmin=global_min_v, vmax=global_max_v, shading='auto')
+        axs[0, idx].set_xlabel(r"Space $x$", fontsize=axis_label_fontsize)
+        axs[0, idx].set_ylabel("Time", fontsize=axis_label_fontsize)
+        axs[0, idx].set_title(f"$v$({label})", fontsize=title_fontsize)
 
-    c4 = ax4.pcolormesh(X, Y, data_pred[:, Nx:])
-    fig.colorbar(c4, ax=ax4)
-    ax4.set_xlabel("space")
-    ax4.set_ylabel("time")
-    ax4.set_title("$w$ (prediction)")
+        # Plot w values with a unified color scale
+        c2 = axs[1, idx].pcolormesh(X, Y, data[:, Nx:], vmin=global_min_w, vmax=global_max_w, shading='auto')
+        axs[1, idx].set_xlabel(r"Space $x$", fontsize=axis_label_fontsize)
+        axs[1, idx].set_ylabel("Time", fontsize=axis_label_fontsize)
+        axs[1, idx].set_title(f"$w$({label})", fontsize=title_fontsize)
+        
+    # Create a single colorbar for the first row (v values) and adjust its position
+    cbar_ax1 = fig.add_axes(cbar_ax[0])  # Adjust these values as needed
+    fig.colorbar(c1, cax=cbar_ax1)
+
+    # Create a single colorbar for the second row (w values) and adjust its position
+    cbar_ax2 = fig.add_axes(cbar_ax[1])  # Adjust these values as needed
+    fig.colorbar(c2, cax=cbar_ax2)
+
+    plt.subplots_adjust(right=0.9)  # Make room for the colorbars  
+
+    plt.tight_layout()
+
+
+# def plot_pde_comparison(x_axis,
+#                         y_axis, 
+#                         data_list,
+#                         data_label_list,
+#                         Nx):
+#     X, Y = np.meshgrid(x_axis, y_axis)
+#     fig, axs = plt.subplots(2, len(data_list), figsize=(16, 12))
+#     ax1, ax2, ax3, ax4 = axs[0, 0], axs[0, 1], axs[1, 0], axs[1, 1]
+
+#     for data, data_label in zip(data_list, data_label_list):
+#         c1 = ax1.pcolormesh(X, Y, data[:, :Nx])
+#         fig.colorbar(c1, ax=ax1)
+#         ax1.set_xlabel(r"Space $x$")
+#         ax1.set_ylabel("Time")
+#         # ax1.set_ylim(bottom=0, top=20)
+#         ax1.set_title("$v$("+data_label+")")
+
+#         c2 = ax2.pcolormesh(X, Y, data[:, Nx:])
+#         fig.colorbar(c2, ax=ax2)
+#         ax2.set_xlabel(r"Space $x$")
+#         ax2.set_ylabel("Time")
+#         ax2.set_title("$w$("+data_label+")")
+
+    # c2 = ax2.pcolormesh(X, Y, data_pred[:, :Nx])
+    # fig.colorbar(c2, ax=ax2)
+    # ax2.set_xlabel(r"Space $x$")
+    # ax2.set_ylabel("Time")
+    # ax2.set_title("$v$("+data_pred_label+")")
+
+    # c3 = ax3.pcolormesh(X, Y, data_true[:, Nx:])
+    # fig.colorbar(c3, ax=ax3)
+    # ax3.set_xlabel(r"Space $x$")
+    # ax3.set_ylabel("Time")
+    # ax3.set_title("$w$("+data_true_label+")")
+
+    # c4 = ax4.pcolormesh(X, Y, data_pred[:, Nx:])
+    # fig.colorbar(c4, ax=ax4)
+    # ax4.set_xlabel(r"Space $x$")
+    # ax4.set_ylabel("Time")
+    # ax4.set_title("$w$("+data_pred_label+")")
 
 
 def compute_diff_ratio_one_traj(data_true_list, data_pred_list):

@@ -118,12 +118,13 @@ zeros_data_z_next_train = tf.zeros_like(dic_pk(data_z_next))
 history_pk = model_pk.fit(
     x=[z_curr_normalized, z_next_normalized, data_u],
     y=zeros_data_z_next_train,
-    epochs=pknn_epochs,
-    batch_size=pknn_epochs,
+    epochs=1000,
+    batch_size=200,
     validation_split=0.2,
     callbacks=[lr_callback, checkpoint_callback, tqdm_callback],
     verbose=0,
 )
+
 
 training_loss = history_pk.history['loss']
 validation_loss = history_pk.history['val_loss']
@@ -132,44 +133,44 @@ best_loss_pk = training_loss[best_epoch]
 best_val_loss_pk = validation_loss[best_epoch]
 
 
-# Build Dl + Polynomial K
-dic_dl_polyK = PsiNN(layer_sizes=dict_layer_size, n_psi_train=n_psi_train)
+# # Build Dl + Polynomial K
+# dic_dl_polyK = PsiNN(layer_sizes=dict_layer_size, n_psi_train=n_psi_train)
 
-solver_dl_polyK = KoopmanActuatedDLSolver(dic=dic_dl_polyK,
-                                          target_dim=target_dim,
-                                          param_dim=param_dim,
-                                          n_psi=n_psi,
-                                          basis_u_func=fhn_pde.basis_u_func)
+# solver_dl_polyK = KoopmanActuatedDLSolver(dic=dic_dl_polyK,
+#                                           target_dim=target_dim,
+#                                           param_dim=param_dim,
+#                                           n_psi=n_psi,
+#                                           basis_u_func=fhn_pde.basis_u_func)
 
-model_dl_polyK = solver_dl_polyK.build_model()
+# model_dl_polyK = solver_dl_polyK.build_model()
 
-solver_dl_polyK.opt_nn_model(data_x=z_curr_normalized,
-                             data_u=data_u,
-                             data_y=z_next_normalized,
-                             zeros_data_y_train=zeros_data_z_next_train,
-                             epochs=polyK_epochs,
-                             batch_size=200,
-                             lr=0.0001,
-                             lr_patience=20,
-                             lr_decay_factor=0.8,
-                             es_patience=50,
-                             es_min_delta=1e-8,
-                             filepath=os.path.join(
-                                weights_path, 'norm_high_u_psi_'+str(n_psi_train)+'_model_dl_polyK_fhn_Nx_'+str(Nx)+'.h5'))
+# solver_dl_polyK.opt_nn_model(data_x=z_curr_normalized,
+#                              data_u=data_u,
+#                              data_y=z_next_normalized,
+#                              zeros_data_y_train=zeros_data_z_next_train,
+#                              epochs=polyK_epochs,
+#                              batch_size=200,
+#                              lr=0.0001,
+#                              lr_patience=20,
+#                              lr_decay_factor=0.8,
+#                              es_patience=50,
+#                              es_min_delta=1e-8,
+#                              filepath=os.path.join(
+#                                 weights_path, 'norm_high_u_psi_'+str(n_psi_train)+'_model_dl_polyK_fhn_Nx_'+str(Nx)+'.h5'))
 
 
 
-loss_dict = {
-    "loss_pk": best_loss_pk,
-    "val_loss_pk": best_val_loss_pk,
-    "loss_dl_polyK": solver_dl_polyK.loss_best_model,
-    "val_loss_dl_polyK": solver_dl_polyK.val_loss_best_model
-}
+# loss_dict = {
+#     "loss_pk": best_loss_pk,
+#     "val_loss_pk": best_val_loss_pk,
+#     "loss_dl_polyK": solver_dl_polyK.loss_best_model,
+#     "val_loss_dl_polyK": solver_dl_polyK.val_loss_best_model
+# }
 
-import pandas as pd
+# import pandas as pd
 
-# Convert the dictionary to a DataFrame
-df = pd.DataFrame([loss_dict])
+# # Convert the dictionary to a DataFrame
+# df = pd.DataFrame([loss_dict])
 
-# Save the DataFrame to a CSV file
-df.to_csv('loss_values_fhn_high_dim_u.csv', index=False)
+# # Save the DataFrame to a CSV file
+# df.to_csv('loss_values_fhn_high_dim_u.csv', index=False)
