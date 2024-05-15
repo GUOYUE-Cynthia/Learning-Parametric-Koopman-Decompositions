@@ -80,6 +80,22 @@ class KoopmanParametricDLSolver(KoopmanParamDLGeneralSolver):
 
         data_pred_list = np.squeeze(np.array(data_pred_list))
         return data_pred_list
+    
+    # def compute_data_list(self, traj_len, data_x_init, data_u):
+    #     data_x_init = tf.reshape(data_x_init, shape=(1, -1))
+    #     data_u = tf.reshape(data_u, shape=(data_u.shape[0], 1, -1))
+
+    #     B = self.dic.generate_B(data_x_init)
+    #     data_pred_list = [data_x_init]
+    #     psi_x = self.dic.call(data_pred_list[-1])
+
+    #     for i in range(traj_len - 1):
+    #         psi_x = self.model_K_u_pred([data_u[i], psi_x])
+    #         x_pred = psi_x @ B
+    #         data_pred_list.append(x_pred)
+
+    #     data_pred_list = np.squeeze(np.array(data_pred_list))
+    #     return data_pred_list
 
 
 class KoopmanLinearDLSolver(KoopmanParamDLGeneralSolver):
@@ -276,6 +292,26 @@ class KoopmanLinearDLSolver(KoopmanParamDLGeneralSolver):
 
         data_pred_list = np.squeeze(np.array(data_pred_list))
         return data_pred_list
+
+    # def compute_data_list(self, traj_len, data_x_init, data_u):
+    #     data_x_init = tf.reshape(data_x_init, shape=(1, -1))
+    #     data_u = tf.reshape(data_u, shape=(data_u.shape[0], 1, -1))
+
+    #     B = self.dic.generate_B(data_x_init)
+    #     data_pred_list = [data_x_init]
+    #     psi_x = self.dic.call(data_pred_list[-1])
+
+    #     for i in range(traj_len - 1):
+            
+    #         psi_x = self.model_K_u_pred_linear.get_layer("Layer_A")(psi_x) + self.model_K_u_pred_linear.get_layer("Layer_B")(
+    #             data_u[i]
+    #         )
+    #         x_pred = psi_x @ B
+    #         data_pred_list.append(x_pred)
+
+    #     data_pred_list = np.squeeze(np.array(data_pred_list))
+    #     return data_pred_list
+
 
 
 class KoopmanBilinearDLSolver(KoopmanParamDLGeneralSolver):
@@ -509,6 +545,31 @@ class KoopmanBilinearDLSolver(KoopmanParamDLGeneralSolver):
         data_pred_list = np.squeeze(np.array(data_pred_list))
         return data_pred_list
 
+    # def compute_data_list(self, traj_len, data_x_init, data_u):
+    #     data_x_init = tf.reshape(data_x_init, shape=(1, -1))
+    #     data_u = tf.reshape(data_u, shape=(data_u.shape[0], 1, -1))
+
+    #     B = self.dic.generate_B(data_x_init)
+    #     data_pred_list = [data_x_init]
+    #     psi_x = self.dic.call(data_pred_list[-1])
+
+    #     for i in range(traj_len - 1):
+            
+    #         u_psix = tf.einsum("ij,ik->kij", psi_x, data_u[i])
+    #         u_psix_list = []
+    #         for curr in u_psix:
+    #             u_psix_list.append(curr)
+    #         u_psix_list = tf.concat(u_psix_list, axis=-1)
+
+    #         psi_x = self.model_K_u_pred_bilinear.get_layer("Layer_A")(psi_x) + self.model_K_u_pred_bilinear.get_layer("Layer_B")(
+    #             u_psix_list
+    #         )
+    #         x_pred = psi_x @ B
+    #         data_pred_list.append(x_pred)
+
+    #     data_pred_list = np.squeeze(np.array(data_pred_list))
+    #     return data_pred_list
+
 
 class KoopmanActuatedDLSolver(KoopmanParamDLGeneralSolver):
     def __init__(self, target_dim, param_dim, dic, n_psi, basis_u_func):
@@ -697,12 +758,6 @@ class KoopmanActuatedDLSolver(KoopmanParamDLGeneralSolver):
 
     # Only test on one trajectory
     def compute_data_list(self, traj_len, data_x_init, data_u):
-        # data_x_init = tf.reshape(data_x_init, shape=(1,-1))
-        # data_u = tf.reshape(data_u, shape=(data_u.shape[0], 1, -1))
-
-        # B = self.dic.generate_B(data_x_init)
-        # data_pred_list = [data_x_init]
-        # basis_u = self.basis_u_func(data_u)
 
         data_x_init = tf.reshape(data_x_init, shape=(1, -1))
         basis_u = self.basis_u_func(data_u)
@@ -727,3 +782,31 @@ class KoopmanActuatedDLSolver(KoopmanParamDLGeneralSolver):
 
         data_pred_list = np.squeeze(np.asarray(data_pred_list))
         return data_pred_list
+    
+    #     # Only test on one trajectory
+    # def compute_data_list(self, traj_len, data_x_init, data_u):
+
+    #     data_x_init = tf.reshape(data_x_init, shape=(1, -1))
+    #     basis_u = self.basis_u_func(data_u)
+
+    #     basis_u = tf.reshape(basis_u, shape=(basis_u.shape[0], 1, -1))
+
+    #     B = self.dic.generate_B(data_x_init)
+    #     data_pred_list = [data_x_init]
+
+    #     psi_x = self.dic.call(data_pred_list[-1])
+
+    #     for i in range(traj_len - 1):
+    #         u_psix = tf.einsum("ij,ik->kij", psi_x, basis_u[i])
+    #         u_psix_list = []
+    #         for curr in u_psix:
+    #             u_psix_list.append(curr)
+    #         u_psix_list = tf.concat(u_psix_list, axis=-1)
+    #         concat_psix_psix_u = tf.concat([psi_x, u_psix_list], axis=-1)
+
+    #         psi_x = self.model.get_layer("Layer_Ks")(concat_psix_psix_u)
+    #         x_pred = psi_x @ B
+    #         data_pred_list.append(x_pred)
+
+    #     data_pred_list = np.squeeze(np.asarray(data_pred_list))
+    #     return data_pred_list

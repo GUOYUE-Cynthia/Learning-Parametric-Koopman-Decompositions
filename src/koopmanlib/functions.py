@@ -18,7 +18,7 @@ def plot_pde(x_axis, y_axis, data, Nx):
     ax2.set_ylabel("time")
     ax2.set_title("$w$")
 
-def plot_pde_comparison(x_axis, y_axis, data_list, data_label_list, Nx, figsize, cbar_ax):
+def plot_pde_comparison(x_axis, y_axis, data_list, data_label_list, Nx, figsize, cbar_ax, fontsize=22):
     X, Y = np.meshgrid(x_axis, y_axis)
     fig, axs = plt.subplots(2, len(data_list), figsize=figsize)  # Adjust the figure size as needed
     # Determine global min and max values for setting a unified color scale
@@ -28,29 +28,39 @@ def plot_pde_comparison(x_axis, y_axis, data_list, data_label_list, Nx, figsize,
     global_max_w = max(data[:, Nx:].max() for data in data_list)
 
     # Set larger font sizes
-    axis_label_fontsize = 14  # Adjust as needed
-    title_fontsize = 16  # Adjust as needed
+    axis_label_fontsize = fontsize  # Adjust as needed
+    title_fontsize = fontsize  # Adjust as needed
 
     for idx, (data, label) in enumerate(zip(data_list, data_label_list)):
         # Plot v values with a unified color scale
         c1 = axs[0, idx].pcolormesh(X, Y, data[:, :Nx], vmin=global_min_v, vmax=global_max_v, shading='auto')
-        axs[0, idx].set_xlabel(r"Space $x$", fontsize=axis_label_fontsize)
+        axs[0, idx].set_xlabel(r"$x$", fontsize=axis_label_fontsize)
         axs[0, idx].set_ylabel("Time", fontsize=axis_label_fontsize)
         axs[0, idx].set_title(f"$v$({label})", fontsize=title_fontsize)
+        axs[0, idx].set_xticks([-10,0,10])
+        axs[0, idx].tick_params(axis='x', labelsize=axis_label_fontsize)
+        axs[0, idx].tick_params(axis='y', labelsize=axis_label_fontsize)
+
 
         # Plot w values with a unified color scale
         c2 = axs[1, idx].pcolormesh(X, Y, data[:, Nx:], vmin=global_min_w, vmax=global_max_w, shading='auto')
-        axs[1, idx].set_xlabel(r"Space $x$", fontsize=axis_label_fontsize)
+        axs[1, idx].set_xlabel(r"$x$", fontsize=axis_label_fontsize)
         axs[1, idx].set_ylabel("Time", fontsize=axis_label_fontsize)
         axs[1, idx].set_title(f"$w$({label})", fontsize=title_fontsize)
+        axs[1, idx].set_xticks([-10,0,10])
+        axs[1, idx].tick_params(axis='x', labelsize=axis_label_fontsize)
+        axs[1, idx].tick_params(axis='y', labelsize=axis_label_fontsize) 
+
         
     # Create a single colorbar for the first row (v values) and adjust its position
     cbar_ax1 = fig.add_axes(cbar_ax[0])  # Adjust these values as needed
-    fig.colorbar(c1, cax=cbar_ax1)
+    colorbar1 = fig.colorbar(c1, cax=cbar_ax1)
+    colorbar1.ax.yaxis.set_tick_params(labelsize=axis_label_fontsize)
 
     # Create a single colorbar for the second row (w values) and adjust its position
     cbar_ax2 = fig.add_axes(cbar_ax[1])  # Adjust these values as needed
-    fig.colorbar(c2, cax=cbar_ax2)
+    colorbar2 = fig.colorbar(c2, cax=cbar_ax2)
+    colorbar2.ax.yaxis.set_tick_params(labelsize=axis_label_fontsize)
 
     plt.subplots_adjust(right=0.9)  # Make room for the colorbars  
 

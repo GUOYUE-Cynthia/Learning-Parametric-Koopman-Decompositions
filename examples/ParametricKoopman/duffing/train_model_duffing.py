@@ -159,7 +159,7 @@ for n_traj_per_param in n_traj_per_param_list:
     checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
         filepath=os.path.join(
             weights_path,
-            "pk_duffing_weights_data_"
+            "test_pk_duffing_weights_data_"
             + str(n_traj_per_param)
             + "_n_param_"
             + str(n_param)
