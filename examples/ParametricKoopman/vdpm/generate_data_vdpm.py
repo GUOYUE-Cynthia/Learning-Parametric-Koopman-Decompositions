@@ -37,4 +37,4 @@ for mu in mu_list:
 
     dict_data = {"data_x": data_x, "data_y": data_y, "data_u": data_u}
 
-    np.save(os.path.join(data_path, "vdpm_data_mu_" + str(mu) + ".npy"), dict_data)
+    # np.save(os.path.join(data_path, "vdpm_data_mu_" + str(mu) + ".npy"), dict_data)
