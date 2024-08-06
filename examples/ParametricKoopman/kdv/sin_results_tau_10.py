@@ -815,6 +815,7 @@ bilinear_kdv_opt_momentum_0 = dx * tf.reduce_sum(tf.square(bilinear_kdv_opt_mome
 pk_kdv_opt_momentum_5 = dx * tf.reduce_sum(tf.square(pk_kdv_opt_momentum_soln_5), axis=-1)
 linear_kdv_opt_momentum_5 = dx * tf.reduce_sum(tf.square(linear_kdv_opt_momentum_soln_5), axis=-1)
 bilinear_kdv_opt_momentum_5 = dx * tf.reduce_sum(tf.square(bilinear_kdv_opt_momentum_soln_5), axis=-1)
+
 plt.figure(figsize=(10, 5))
 plt.plot(momentum_ref, label="Reference", linestyle="--", color=ref_color, linewidth=linewidth)
 

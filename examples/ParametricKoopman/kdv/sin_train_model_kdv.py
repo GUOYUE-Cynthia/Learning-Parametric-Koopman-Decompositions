@@ -50,7 +50,7 @@ print('K_layer_size', K_layer_size)
 
 # Load data
 dict_data = np.load(
-    os.path.join(data_path, "data_kdv_" + forcing_type + ".npy"), allow_pickle=True
+    os.path.join(data_path, "data_kdv_" + forcing_type + "_"+str(Nx)+".npy"), allow_pickle=True
 )
 
 data_x = dict_data[()]["data_x"]
