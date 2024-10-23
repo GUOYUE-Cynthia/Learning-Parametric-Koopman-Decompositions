@@ -47,10 +47,10 @@ This project uses `python 3.8`. Set up the project for development using the fol
 
 We use Duffing equation, Van der Pol Mathieu oscillator, FitzHugh-Nagumo partial differential equation and Korteweg-De Vries equation as examples to show how to use this package. Please enter the following commands in the terminal.
 
-### Enter [examples](./examples)
+### Enter [examples >> ParametricKoopman](./examples/ParametricKoopman)
 
 ```bash
-$cd examples
+$cd examples/ParametricKoopman
 ```
 
 #### Duffing equation
@@ -73,7 +73,7 @@ $cd duffing
 
 3. Evaluate models in
 
-   - [evaluate_duffing.ipynb](./examples/duffing/evaluate_duffing.ipynb)
+   - [evaluate_duffing.ipynb](./examples/ParametricKoopman/duffing/evaluate_duffing.ipynb)
 
 #### Van der Pol Mathieu oscillator
 
@@ -95,12 +95,12 @@ $cd vdpm
 
 3. Evaluate models in
 
-   - [evaluate_vdpm.ipynb](./examples/duffing/evaluate_vdpm.ipynb)
+   - [evaluate_vdpm.ipynb](./examples/ParametricKoopman/vdpm/evaluate_vdpm.ipynb)
 
 #### FitzHugh-Nagumo PDE
 
 ```bash
-$cd fhn
+$cd fhn/fhn_dim_10
 ```
 
 ##### Input u is 1-dimensional
@@ -119,7 +119,7 @@ $cd fhn
 
 3. Evaluate models in
 
-   - [evaluate_fhn.ipynb](./examples/fhn/evaluate_fhn.ipynb)
+   - [evaluate_fhn.ipynb](./examples/ParametricKoopman/fhn/evaluate_fhn.ipynb)
 
 ##### Input u is 3-dimensional
 
@@ -137,12 +137,12 @@ $cd fhn
 
 3. Evaluate models in
 
-   - [evaluate_fhn_high_dim_u.ipynb](./examples/fhn/evaluate_fhn_high_dim_u.ipynb)
+   - [evaluate_fhn_high_dim_u.ipynb](./examples/ParametricKoopman/fhn/evaluate_fhn_high_dim_u.ipynb)
 
 #### Korteweg-De Vries equation
 
 ```bash
-$cd kdv
+$cd kdv/nonlinear_case
 ```
 
 1. Generate data
@@ -154,12 +154,24 @@ $cd kdv
 2. Train models
 
    ```bash
-   $python train_model_kdv.py config_kdv.json
+   $python sin_train_model_kdv.py config_kdv.json
    ```
 
-3. Evaluate models in
+3. Collect the predictions and tracking results
 
-   - [evaluate_kdv_mass_momentum_pk_mpc.ipynb.ipynb](./examples/fhn/evaluate_kdv_mass_momentum_pk_mpc.ipynb)
+   ```bash
+   $python sin_results_tau_10.py config_kdv.json
+   ```
+
+4. Check controllability
+
+   ```bash
+   $python train_model_kdv_Klayer.py config_kdv_K_layer.json
+   ```
+
+   - [sin_controllability_save_data.ipynb](./examples/ParametricKoopman/fhn/nonlinear_case/sin_controllability_save_data.ipynb)
+
+   - [sin_controllability_save_figures.ipynb](./examples/ParametricKoopman/fhn/nonlinear_case/sin_controllability_save_figures.ipynb)
 
 ## Reproduce the results
 

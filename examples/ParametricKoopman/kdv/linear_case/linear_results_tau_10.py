@@ -9,11 +9,18 @@ from tqdm import tqdm
 config_file = sys.argv[1]
 
 with open(config_file, "r") as f:
-    config = json.load(f)["sin"]
+    config = json.load(f)["linear"]
 data_path = config["data_settings"]["data_path"]
 weights_path = config["nn_settings"]["weights_path"]
 figures_path = config["data_settings"]["figures_path"]
 # figures_path = '/home/guoyue/Learning-Parametric-Koopman-Decompositions/examples/ParametricKoopman/kdv/kdv_results/figures_tau_10'
+
+# Check if the folder exists, if not, create it
+if not os.path.exists(figures_path):
+    os.makedirs(figures_path)
+    print(f"Directory {figures_path} created.")
+else:
+    print(f"Directory {figures_path} already exists.")
 
 
 
@@ -203,180 +210,180 @@ param_pred_list = []
 Tsim_pred = 0.1
 traj_len_pred = int(Tsim_pred / T)
 
-# for seed_IC, seed_u in seed_list:
-#     # Forward prediction problem setting
-#     y0_pred = kdv.generate_y0(seed_IC)
+for seed_IC, seed_u in seed_list:
+    # Forward prediction problem setting
+    y0_pred = kdv.generate_y0(seed_IC)
 
-#     # Set the seed of param_list
-#     np.random.seed(seed_u)
+    # Set the seed of param_list
+    np.random.seed(seed_u)
 
-#     param_pred = (
-#         np.random.uniform(low=0, high=1, size=(traj_len_pred, param_dim)) * (umax - umin) + umin
-#     )
+    param_pred = (
+        np.random.uniform(low=0, high=1, size=(traj_len_pred, param_dim)) * (umax - umin) + umin
+    )
 
-#     y0_pred_list.append(y0_pred)
-#     param_pred_list.append(param_pred)
-# error_mass_list_pk, error_momentum_list_pk = kdv.compute_obs_error(
-#     dic=dic_pk,
-#     compute_kdv_soln_func=compute_kdv_soln,
-#     compute_obs_func_model=compute_pk_obs,
-#     error_func=compute_diff_ratio_one_traj,
-#     y0_pred_list=y0_pred_list,
-#     param_pred_list=param_pred_list,
-#     dx=dx,
-# )
+    y0_pred_list.append(y0_pred)
+    param_pred_list.append(param_pred)
+error_mass_list_pk, error_momentum_list_pk = kdv.compute_obs_error(
+    dic=dic_pk,
+    compute_kdv_soln_func=compute_kdv_soln,
+    compute_obs_func_model=compute_pk_obs,
+    error_func=compute_diff_ratio_one_traj,
+    y0_pred_list=y0_pred_list,
+    param_pred_list=param_pred_list,
+    dx=dx,
+)
 
-# mass_mean_pk, mass_std_pk, mass_mean_plus_pk, mass_mean_minus_pk = compute_stat_info(
-#     error_mass_list_pk
-# )
-# momentum_mean_pk, momentum_std_pk, momentum_mean_plus_pk, momentum_mean_minus_pk = (
-#     compute_stat_info(error_momentum_list_pk)
-# )
-# error_mass_list_linear, error_momentum_list_linear = kdv.compute_obs_error(
-#     dic=dic_linear,
-#     compute_kdv_soln_func=compute_kdv_soln,
-#     compute_obs_func_model=compute_linear_obs,
-#     error_func=compute_diff_ratio_one_traj,
-#     y0_pred_list=y0_pred_list,
-#     param_pred_list=param_pred_list,
-#     dx=dx,
-# )
-# mass_mean_linear, mass_std_linear, mass_mean_plus_linear, mass_mean_minus_linear = (
-#     compute_stat_info(error_mass_list_linear)
-# )
-# (
-#     momentum_mean_linear,
-#     momentum_std_linear,
-#     momentum_mean_plus_linear,
-#     momentum_mean_minus_linear,
-# ) = compute_stat_info(error_momentum_list_linear)
-# error_mass_list_bilinear, error_momentum_list_bilinear = kdv.compute_obs_error(
-#     dic=dic_bilinear,
-#     compute_kdv_soln_func=compute_kdv_soln,
-#     compute_obs_func_model=compute_bilinear_obs,
-#     error_func=compute_diff_ratio_one_traj,
-#     y0_pred_list=y0_pred_list,
-#     param_pred_list=param_pred_list,
-#     dx=dx,
-# )
-# mass_mean_bilinear, mass_std_bilinear, mass_mean_plus_bilinear, mass_mean_minus_bilinear = (
-#     compute_stat_info(error_mass_list_bilinear)
-# )
-# (
-#     momentum_mean_bilinear,
-#     momentum_std_bilinear,
-#     momentum_mean_plus_bilinear,
-#     momentum_mean_minus_bilinear,
-# ) = compute_stat_info(error_momentum_list_bilinear)
-# t_axis = np.arange(0, traj_len_pred + 1, 1)
+mass_mean_pk, mass_std_pk, mass_mean_plus_pk, mass_mean_minus_pk = compute_stat_info(
+    error_mass_list_pk
+)
+momentum_mean_pk, momentum_std_pk, momentum_mean_plus_pk, momentum_mean_minus_pk = (
+    compute_stat_info(error_momentum_list_pk)
+)
+error_mass_list_linear, error_momentum_list_linear = kdv.compute_obs_error(
+    dic=dic_linear,
+    compute_kdv_soln_func=compute_kdv_soln,
+    compute_obs_func_model=compute_linear_obs,
+    error_func=compute_diff_ratio_one_traj,
+    y0_pred_list=y0_pred_list,
+    param_pred_list=param_pred_list,
+    dx=dx,
+)
+mass_mean_linear, mass_std_linear, mass_mean_plus_linear, mass_mean_minus_linear = (
+    compute_stat_info(error_mass_list_linear)
+)
+(
+    momentum_mean_linear,
+    momentum_std_linear,
+    momentum_mean_plus_linear,
+    momentum_mean_minus_linear,
+) = compute_stat_info(error_momentum_list_linear)
+error_mass_list_bilinear, error_momentum_list_bilinear = kdv.compute_obs_error(
+    dic=dic_bilinear,
+    compute_kdv_soln_func=compute_kdv_soln,
+    compute_obs_func_model=compute_bilinear_obs,
+    error_func=compute_diff_ratio_one_traj,
+    y0_pred_list=y0_pred_list,
+    param_pred_list=param_pred_list,
+    dx=dx,
+)
+mass_mean_bilinear, mass_std_bilinear, mass_mean_plus_bilinear, mass_mean_minus_bilinear = (
+    compute_stat_info(error_mass_list_bilinear)
+)
+(
+    momentum_mean_bilinear,
+    momentum_std_bilinear,
+    momentum_mean_plus_bilinear,
+    momentum_mean_minus_bilinear,
+) = compute_stat_info(error_momentum_list_bilinear)
+t_axis = np.arange(0, traj_len_pred + 1, 1)
 
-# # plt.title("Mass", fontsize=28)
+# plt.title("Mass", fontsize=28)
 
 
-# plt.plot(mass_mean_pk,
-#           label="Ours", 
-#           color=pk_curve,
-#           linestyle=pk_linestyle,
-#           linewidth=3, 
-#           alpha=0.5)
-# plt.fill_between(
-#     t_axis, np.maximum(mass_mean_minus_pk, 0), mass_mean_plus_pk, color=pk_shadow, alpha=0.5
-# )
+plt.plot(mass_mean_pk,
+          label="Ours", 
+          color=pk_curve,
+          linestyle=pk_linestyle,
+          linewidth=3, 
+          alpha=0.5)
+plt.fill_between(
+    t_axis, np.maximum(mass_mean_minus_pk, 0), mass_mean_plus_pk, color=pk_shadow, alpha=0.5
+)
 
-# plt.plot(mass_mean_linear, 
-#          label="M2", 
-#          color=linear_curve,
-#          linestyle=linear_linestyle, 
-#          linewidth=3)
-# plt.fill_between(
-#     t_axis,
-#     np.maximum(mass_mean_minus_linear, 0),
-#     mass_mean_plus_linear,
-#     color=linear_shadow,
-#     alpha=0.5,
-# )
+plt.plot(mass_mean_linear, 
+         label="M2", 
+         color=linear_curve,
+         linestyle=linear_linestyle, 
+         linewidth=3)
+plt.fill_between(
+    t_axis,
+    np.maximum(mass_mean_minus_linear, 0),
+    mass_mean_plus_linear,
+    color=linear_shadow,
+    alpha=0.5,
+)
 
-# plt.plot(mass_mean_bilinear, 
-#          label="M3", 
-#          color=bilinear_curve,
-#          linestyle=bilinear_linestyle,
-#            linewidth=3)
-# plt.fill_between(
-#     t_axis,
-#     np.maximum(mass_mean_minus_bilinear, 0),
-#     mass_mean_plus_bilinear,
-#     color=bilinear_shadow,
-#     alpha=0.5,
-# )
+plt.plot(mass_mean_bilinear, 
+         label="M3", 
+         color=bilinear_curve,
+         linestyle=bilinear_linestyle,
+           linewidth=3)
+plt.fill_between(
+    t_axis,
+    np.maximum(mass_mean_minus_bilinear, 0),
+    mass_mean_plus_bilinear,
+    color=bilinear_shadow,
+    alpha=0.5,
+)
 
-# plt.xlabel(r"$n$", fontsize=28)
-# plt.ylabel("Error", fontsize=28)
-# plt.xticks(fontsize=18)
-# plt.yticks(fontsize=18)
-# plt.legend(fontsize=18)
+plt.xlabel(r"$n$", fontsize=28)
+plt.ylabel("Error", fontsize=28)
+plt.xticks(fontsize=18)
+plt.yticks(fontsize=18)
+plt.legend(fontsize=18)
 
-# plt.savefig(os.path.join(figures_path, 'kdv_'+forcing_type+'_mass_pred.png'), dpi=200, bbox_inches='tight')
-# plt.savefig(os.path.join(figures_path, 'kdv_'+forcing_type+'_mass_pred.pdf'), dpi=200, bbox_inches='tight')
+plt.savefig(os.path.join(figures_path, 'kdv_'+forcing_type+'_mass_pred.png'), dpi=200, bbox_inches='tight')
+plt.savefig(os.path.join(figures_path, 'kdv_'+forcing_type+'_mass_pred.pdf'), dpi=200, bbox_inches='tight')
 
-# plt.close()
+plt.close()
 
-# print('---Predict Mass Done---')
+print('---Predict Mass Done---')
 
-# t_axis = np.arange(0, traj_len_pred + 1, 1)
+t_axis = np.arange(0, traj_len_pred + 1, 1)
 
-# # plt.title("Momentum", fontsize=28)
-# plt.plot(momentum_mean_pk, 
-#          label="Ours", 
-#          color=pk_curve,
-#          linestyle=pk_linestyle, 
-#          linewidth=3, 
-#          alpha=0.5)
-# plt.fill_between(
-#     t_axis,
-#     np.maximum(momentum_mean_minus_pk, 0),
-#     momentum_mean_plus_pk,
-#     color=pk_shadow,
-#     alpha=0.5,
-# )
+# plt.title("Momentum", fontsize=28)
+plt.plot(momentum_mean_pk, 
+         label="Ours", 
+         color=pk_curve,
+         linestyle=pk_linestyle, 
+         linewidth=3, 
+         alpha=0.5)
+plt.fill_between(
+    t_axis,
+    np.maximum(momentum_mean_minus_pk, 0),
+    momentum_mean_plus_pk,
+    color=pk_shadow,
+    alpha=0.5,
+)
 
-# plt.plot(momentum_mean_linear,
-#           label="M2", 
-#           color=linear_curve,
-#           linestyle=linear_linestyle,
-#           linewidth=3)
-# plt.fill_between(
-#     t_axis,
-#     np.maximum(momentum_mean_minus_linear, 0),
-#     momentum_mean_plus_linear,
-#     color=linear_shadow,
-#     alpha=0.5,
-# )
+plt.plot(momentum_mean_linear,
+          label="M2", 
+          color=linear_curve,
+          linestyle=linear_linestyle,
+          linewidth=3)
+plt.fill_between(
+    t_axis,
+    np.maximum(momentum_mean_minus_linear, 0),
+    momentum_mean_plus_linear,
+    color=linear_shadow,
+    alpha=0.5,
+)
 
-# plt.plot(momentum_mean_bilinear, 
-#          label="M3", 
-#          color=bilinear_curve, 
-#         linestyle=bilinear_linestyle,
-#          linewidth=3)
-# plt.fill_between(
-#     t_axis,
-#     np.maximum(momentum_mean_minus_bilinear, 0),
-#     momentum_mean_plus_bilinear,
-#     color=bilinear_shadow,
-#     alpha=0.5,
-# )
+plt.plot(momentum_mean_bilinear, 
+         label="M3", 
+         color=bilinear_curve, 
+        linestyle=bilinear_linestyle,
+         linewidth=3)
+plt.fill_between(
+    t_axis,
+    np.maximum(momentum_mean_minus_bilinear, 0),
+    momentum_mean_plus_bilinear,
+    color=bilinear_shadow,
+    alpha=0.5,
+)
 
-# plt.xlabel(r"$n$", fontsize=28)
-# plt.ylabel("Error", fontsize=28)
-# plt.xticks(fontsize=18)
-# plt.yticks(fontsize=18)
-# plt.legend(fontsize=18)
+plt.xlabel(r"$n$", fontsize=28)
+plt.ylabel("Error", fontsize=28)
+plt.xticks(fontsize=18)
+plt.yticks(fontsize=18)
+plt.legend(fontsize=18)
 
-# plt.savefig(os.path.join(figures_path, 'kdv_'+forcing_type+'_momentum_pred.png'), dpi=200, bbox_inches='tight')
-# plt.savefig(os.path.join(figures_path, 'kdv_'+forcing_type+'_momentum_pred.pdf'), dpi=200, bbox_inches='tight')
+plt.savefig(os.path.join(figures_path, 'kdv_'+forcing_type+'_momentum_pred.png'), dpi=200, bbox_inches='tight')
+plt.savefig(os.path.join(figures_path, 'kdv_'+forcing_type+'_momentum_pred.pdf'), dpi=200, bbox_inches='tight')
 
-# plt.close()
+plt.close()
 
-# print('---Predict Momentum Done---')
+print('---Predict Momentum Done---')
 
 # Tracking problem
 from scipy.optimize import minimize
@@ -672,14 +679,13 @@ track_step_2 = int(track_time_2 / T)
 
 control_exact_opt = np.zeros(shape=pk_opt_control_mass_0.shape, dtype="float64")
 
-control_exact_opt[:track_step_1] = 0.5
-control_exact_opt[500 : 500 + track_step_2] = 0.5
+control_exact_opt[:track_step_1] = 1
+control_exact_opt[500 : 500 + track_step_2] = 1
 
 kdv_opt_control = compute_kdv_soln(y0_track, control_exact_opt)
 
 kdv_opt_control = np.asarray(kdv_opt_control)
 kdv_opt_mass = dx * tf.reshape(tf.math.reduce_sum(kdv_opt_control, axis=-1), shape=(-1, 1))
-
 
 plt.figure(figsize=(10, 5))
 plt.plot(mass_ref, label="Reference", linestyle="--", color=ref_color, linewidth=linewidth)
@@ -731,7 +737,8 @@ plt.plot(
     linewidth=linewidth,
 )
 
-plt.plot(kdv_opt_mass, label="KdV", linestyle="--", color=exact_color, linewidth=linewidth)
+
+plt.plot(kdv_opt_mass, label="KdV", linestyle="--", color=exact_color, linewidth=linewidth, alpha=0.5)
 
 plt.xticks(fontsize=ticks_font)
 plt.yticks(fontsize=ticks_font)
@@ -815,7 +822,6 @@ bilinear_kdv_opt_momentum_0 = dx * tf.reduce_sum(tf.square(bilinear_kdv_opt_mome
 pk_kdv_opt_momentum_5 = dx * tf.reduce_sum(tf.square(pk_kdv_opt_momentum_soln_5), axis=-1)
 linear_kdv_opt_momentum_5 = dx * tf.reduce_sum(tf.square(linear_kdv_opt_momentum_soln_5), axis=-1)
 bilinear_kdv_opt_momentum_5 = dx * tf.reduce_sum(tf.square(bilinear_kdv_opt_momentum_soln_5), axis=-1)
-
 plt.figure(figsize=(10, 5))
 plt.plot(momentum_ref, label="Reference", linestyle="--", color=ref_color, linewidth=linewidth)
 
@@ -906,4 +912,4 @@ results_dict = {'pk_kdv_opt_momentum_0': pk_kdv_opt_momentum_0,
             'bilinear_t_list_momentum_5': bilinear_t_list_momentum_5,
 }
 
-np.save(os.path.join(data_path,'sin_tau_'+str(tau)+'_tracking_results.npy'), results_dict)
+np.save(os.path.join(data_path,'linear_tau_'+str(tau)+'_tracking_results.npy'), results_dict)

@@ -9,7 +9,8 @@ from tqdm import tqdm
 config_file = "config_kdv.json"
 
 with open(config_file, "r") as f:
-    config = json.load(f)["linear"]
+    config = json.load(f)["sin"]
+
 data_path = config["data_settings"]["data_path"]
 weights_path = config["nn_settings"]["weights_path"]
 figures_path = config["data_settings"]["figures_path"]
@@ -192,7 +193,7 @@ def compute_kdv_soln(y0, param_list):
     return kdv_soln_list
     
 pred_traj_number = 10
-np.random.seed(625)
+np.random.seed(12)
 seed_list = np.random.randint(low=1, high=200, size=(pred_traj_number, 2))
 
 y0_pred_list = []
@@ -271,20 +272,20 @@ t_axis = np.arange(0, traj_len_pred + 1, 1)
 # plt.title("Mass", fontsize=28)
 
 
-plt.plot(mass_mean_pk,
-          label="Ours", 
-          color=pk_curve,
-          linestyle=pk_linestyle,
-          linewidth=3, 
-          alpha=0.5)
+plt.plot(mass_mean_pk, 
+         label="Ours", 
+         color=pk_curve, 
+         linewidth=3,
+         linestyle=pk_linestyle,
+         alpha=0.5)
 plt.fill_between(
     t_axis, np.maximum(mass_mean_minus_pk, 0), mass_mean_plus_pk, color=pk_shadow, alpha=0.5
 )
 
 plt.plot(mass_mean_linear, 
          label="M2", 
-         color=linear_curve,
-         linestyle=linear_linestyle, 
+         color=linear_curve, 
+         linestyle=linear_linestyle,
          linewidth=3)
 plt.fill_between(
     t_axis,
@@ -298,7 +299,7 @@ plt.plot(mass_mean_bilinear,
          label="M3", 
          color=bilinear_curve,
          linestyle=bilinear_linestyle,
-           linewidth=3)
+         linewidth=3)
 plt.fill_between(
     t_axis,
     np.maximum(mass_mean_minus_bilinear, 0),
@@ -325,23 +326,23 @@ t_axis = np.arange(0, traj_len_pred + 1, 1)
 # plt.title("Momentum", fontsize=28)
 plt.plot(momentum_mean_pk, 
          label="Ours", 
-         color=pk_curve,
-         linestyle=pk_linestyle, 
+         color=pk_curve, 
          linewidth=3, 
+         linestyle=pk_linestyle,
          alpha=0.5)
 plt.fill_between(
     t_axis,
     np.maximum(momentum_mean_minus_pk, 0),
     momentum_mean_plus_pk,
     color=pk_shadow,
-    alpha=0.5,
+    alpha=0.5
 )
 
-plt.plot(momentum_mean_linear,
-          label="M2", 
-          color=linear_curve,
-          linestyle=linear_linestyle,
-          linewidth=3)
+plt.plot(momentum_mean_linear, 
+         label="M2", 
+         color=linear_curve, 
+         linestyle=linear_linestyle,
+         linewidth=3)
 plt.fill_between(
     t_axis,
     np.maximum(momentum_mean_minus_linear, 0),
@@ -352,8 +353,8 @@ plt.fill_between(
 
 plt.plot(momentum_mean_bilinear, 
          label="M3", 
-         color=bilinear_curve, 
-        linestyle=bilinear_linestyle,
+         color=bilinear_curve,
+         linestyle=bilinear_linestyle,
          linewidth=3)
 plt.fill_between(
     t_axis,
@@ -526,8 +527,11 @@ def KoopmanMPC(y0, tau, traj_len, soln_ref, kdv_solver, B, loss, lambda_param):
     return opt_control_list, y0_mpc_loop_list
 B_mass = dic_pk.generate_B_mass(mass_ref)
 B_momentum = dic_pk.generate_B_momentum(momentum_ref)
-### Track mass
+
 tau = 1  # time horizon
+
+### Track mass
+
 # lambda_param = 0.005
 # lambda_param = 0
 pk_opt_control_mass_0, pk_kdv_opt_mass_soln_0 = KoopmanMPC(
@@ -642,8 +646,8 @@ track_step_2 = int(track_time_2 / T)
 
 control_exact_opt = np.zeros(shape=pk_opt_control_mass_0.shape, dtype="float64")
 
-control_exact_opt[:track_step_1] = 1
-control_exact_opt[500 : 500 + track_step_2] = 1
+control_exact_opt[:track_step_1] = 0.5
+control_exact_opt[500 : 500 + track_step_2] = 0.5
 
 kdv_opt_control = compute_kdv_soln(y0_track, control_exact_opt)
 
@@ -792,14 +796,14 @@ plt.plot(
     label=r"$M2(\lambda = 0)$",
     color=linear_no_penalty_color,
     linestyle=linear_linestyle,
-    linewidth=linewidth
+    linewidth=linewidth,
 )
 plt.plot(
     bilinear_kdv_opt_momentum_0,
     label=r"$M3(\lambda = 0)$",
     color=bilinear_no_penalty_color,
     linestyle=bilinear_linestyle,
-    linewidth=linewidth
+    linewidth=linewidth,
 )
 plt.plot(
     pk_kdv_opt_momentum_0,

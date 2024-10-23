@@ -11,10 +11,21 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 
 config_file = sys.argv[1]
+
 with open(config_file) as f:
-    config = json.load(f)
+    # config = json.load(f)['linear'] # # Use this if we want to generate data for the sin example
+    config = json.load(f)['sin'] # Use this if we want to generate data for the sin example
+
 
 data_path = config["data_settings"]["data_path"]
+
+
+# Check if the folder exists, if not, create it
+if not os.path.exists(data_path):
+    os.makedirs(data_path)
+    print(f"Directory {data_path} created.")
+else:
+    print(f"Directory {data_path} already exists.")
 
 Nx = config["data_settings"]["Nx"]
 n_traj = config["data_settings"]["n_traj"]
@@ -57,4 +68,4 @@ data_x, data_y, data_u = kdv.generate_data(
 
 data_dict = {"data_x": data_x, "data_y": data_y, "data_u": data_u}
 
-# np.save(os.path.join(data_path, 'data_kdv_'+forcing_type+'.npy'), data_dict)
+np.save(os.path.join(data_path, 'data_kdv_'+forcing_type+'.npy'), data_dict)

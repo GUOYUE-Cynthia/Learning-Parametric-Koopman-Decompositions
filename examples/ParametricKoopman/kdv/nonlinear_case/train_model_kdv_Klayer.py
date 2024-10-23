@@ -26,6 +26,13 @@ data_path = config["data_settings"]["data_path"]
 weights_path = config["nn_settings"]["weights_path"]
 forcing_type = config["data_settings"]["forcing_type"]
 
+# Check if the folder exists, if not, create it
+if not os.path.exists(weights_path):
+    os.makedirs(weights_path)
+    print(f"Directory {weights_path} created.")
+else:
+    print(f"Directory {weights_path} already exists.")
+
 n_psi_train = config["nn_settings"]["n_psi_train"]
 
 

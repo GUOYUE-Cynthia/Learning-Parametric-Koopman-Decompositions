@@ -6,7 +6,7 @@ import json
 import sys
 
 from tqdm import tqdm
-config_file = "config_kdv.json"
+config_file = sys.argv[1]
 
 with open(config_file, "r") as f:
     config = json.load(f)["sin"]
@@ -15,6 +15,12 @@ data_path = config["data_settings"]["data_path"]
 weights_path = config["nn_settings"]["weights_path"]
 figures_path = config["data_settings"]["figures_path"]
 
+# Check if the folder exists, if not, create it
+if not os.path.exists(figures_path):
+    os.makedirs(figures_path)
+    print(f"Directory {figures_path} created.")
+else:
+    print(f"Directory {figures_path} already exists.")
 
 n_traj = config["data_settings"]["n_traj"]
 traj_len = config["data_settings"]["traj_len"]
@@ -193,7 +199,7 @@ def compute_kdv_soln(y0, param_list):
     return kdv_soln_list
     
 pred_traj_number = 10
-np.random.seed(12)
+np.random.seed(625)
 seed_list = np.random.randint(low=1, high=200, size=(pred_traj_number, 2))
 
 y0_pred_list = []
@@ -272,20 +278,20 @@ t_axis = np.arange(0, traj_len_pred + 1, 1)
 # plt.title("Mass", fontsize=28)
 
 
-plt.plot(mass_mean_pk, 
-         label="Ours", 
-         color=pk_curve, 
-         linewidth=3,
-         linestyle=pk_linestyle,
-         alpha=0.5)
+plt.plot(mass_mean_pk,
+          label="Ours", 
+          color=pk_curve,
+          linestyle=pk_linestyle,
+          linewidth=3, 
+          alpha=0.5)
 plt.fill_between(
     t_axis, np.maximum(mass_mean_minus_pk, 0), mass_mean_plus_pk, color=pk_shadow, alpha=0.5
 )
 
 plt.plot(mass_mean_linear, 
          label="M2", 
-         color=linear_curve, 
-         linestyle=linear_linestyle,
+         color=linear_curve,
+         linestyle=linear_linestyle, 
          linewidth=3)
 plt.fill_between(
     t_axis,
@@ -299,7 +305,7 @@ plt.plot(mass_mean_bilinear,
          label="M3", 
          color=bilinear_curve,
          linestyle=bilinear_linestyle,
-         linewidth=3)
+           linewidth=3)
 plt.fill_between(
     t_axis,
     np.maximum(mass_mean_minus_bilinear, 0),
@@ -326,23 +332,23 @@ t_axis = np.arange(0, traj_len_pred + 1, 1)
 # plt.title("Momentum", fontsize=28)
 plt.plot(momentum_mean_pk, 
          label="Ours", 
-         color=pk_curve, 
+         color=pk_curve,
+         linestyle=pk_linestyle, 
          linewidth=3, 
-         linestyle=pk_linestyle,
          alpha=0.5)
 plt.fill_between(
     t_axis,
     np.maximum(momentum_mean_minus_pk, 0),
     momentum_mean_plus_pk,
     color=pk_shadow,
-    alpha=0.5
+    alpha=0.5,
 )
 
-plt.plot(momentum_mean_linear, 
-         label="M2", 
-         color=linear_curve, 
-         linestyle=linear_linestyle,
-         linewidth=3)
+plt.plot(momentum_mean_linear,
+          label="M2", 
+          color=linear_curve,
+          linestyle=linear_linestyle,
+          linewidth=3)
 plt.fill_between(
     t_axis,
     np.maximum(momentum_mean_minus_linear, 0),
@@ -353,8 +359,8 @@ plt.fill_between(
 
 plt.plot(momentum_mean_bilinear, 
          label="M3", 
-         color=bilinear_curve,
-         linestyle=bilinear_linestyle,
+         color=bilinear_curve, 
+        linestyle=bilinear_linestyle,
          linewidth=3)
 plt.fill_between(
     t_axis,
@@ -375,7 +381,7 @@ plt.savefig(os.path.join(figures_path, 'kdv_'+forcing_type+'_momentum_pred.pdf')
 
 plt.close()
 
-print('---Predict Momentum Done---')
+# print('---Predict Momentum Done---')
 
 # Tracking problem
 from scipy.optimize import minimize
@@ -393,14 +399,15 @@ for i in range(soln_ref.shape[0]):
         soln_ref[i, :] = 0.5
 mass_ref = dx * tf.reshape(tf.math.reduce_sum(soln_ref, axis=-1), shape=(-1, 1))
 momentum_ref = dx * tf.reshape(tf.math.reduce_sum(tf.square(soln_ref), axis=-1), shape=(-1, 1))
+
 def mpc_loss_pk(param, tau, ref_list, y0, B, lambda_param):
     param = tf.reshape(param, shape=(int(param.shape[0] / param_dim), 1, param_dim))
     loss_list = []
     y0 = y0.reshape(1, -1)
-    psi_y = dic_pk(y0)
+    psi_x = dic_pk(y0)
 
     for i in range(tau):
-        psi_x = model_K_u_pred_pk([param[i], psi_y])
+        psi_x = model_K_u_pred_pk([param[i], psi_x])
         obs_next = psi_x @ B
         loss_curr = tf.square(tf.norm(ref_list[i] - obs_next))
         loss_list.append(loss_curr)
@@ -462,6 +469,9 @@ def mpc_loss_bilinear(param, tau, ref_list, y0, B, lambda_param):
     loss = ref_loss + param_loss
 
     return loss
+
+import time
+
 def KoopmanMPC(y0, tau, traj_len, soln_ref, kdv_solver, B, loss, lambda_param):
 
     bounds = []
@@ -471,13 +481,18 @@ def KoopmanMPC(y0, tau, traj_len, soln_ref, kdv_solver, B, loss, lambda_param):
     y0_mpc_loop_list = [y0]
     opt_control_list = []
 
-    # Wrap the loop with tqdm for a progress bar
-    for current_time in tqdm(range(traj_len - tau - 1), desc="Processing time steps"):
+    results_list = []
 
-        param_init = (
+    t_list = []
+
+    param_init = (
             np.random.uniform(low=0, high=1, size=(tau * param_dim,)) * (umax - umin) + umin
         )
 
+    # Wrap the loop with tqdm for a progress bar
+    for current_time in tqdm(range(traj_len - tau - 1), desc="Processing time steps"):
+
+        t1 = time.time()
         results = minimize(
             loss,
             x0=param_init,
@@ -489,17 +504,31 @@ def KoopmanMPC(y0, tau, traj_len, soln_ref, kdv_solver, B, loss, lambda_param):
                 lambda_param,
             ),
             bounds=bounds,
+            method='L-BFGS-B'
         )
 
+        t2 = time.time()
+
+        results_list.append(results)
+
         param = results.x.reshape(tau, param_dim)[0]
+        param_init = results.x.reshape((tau * param_dim,))
         soln_next = kdv_solver(y0_mpc_loop_list[-1], T, param)
+
         y_next = soln_next.y.T[-1]
         y0_mpc_loop_list.append(y_next)
         opt_control_list.append(param)
 
+        print("*** current time ***", current_time)
+        print("optimize time: ", t2-t1)
+
+        t_list.append(t2-t1)
+
+    print("t mean: ", np.mean(t_list))
+
     current_time = current_time + 1
 
-    param_init = np.random.uniform(low=0, high=1, size=(tau * param_dim,)) * (umax - umin) + umin
+    # param_init = np.random.uniform(low=0, high=1, size=(tau * param_dim,)) * (umax - umin) + umin
 
     results = minimize(
         loss,
@@ -513,6 +542,7 @@ def KoopmanMPC(y0, tau, traj_len, soln_ref, kdv_solver, B, loss, lambda_param):
         ),
         bounds=bounds,
     )
+    results_list.append(results)
 
     param = results.x.reshape(tau, param_dim)
     for param_curr in param:
@@ -524,14 +554,17 @@ def KoopmanMPC(y0, tau, traj_len, soln_ref, kdv_solver, B, loss, lambda_param):
     opt_control_list = np.asarray(opt_control_list)
     y0_mpc_loop_list = np.asarray(y0_mpc_loop_list)
 
-    return opt_control_list, y0_mpc_loop_list
+    return opt_control_list, y0_mpc_loop_list, results_list, t_list
+
+
+
 B_mass = dic_pk.generate_B_mass(mass_ref)
 B_momentum = dic_pk.generate_B_momentum(momentum_ref)
 ### Track mass
-tau = 1  # time horizon
+tau = 10  # time horizon
 # lambda_param = 0.005
 # lambda_param = 0
-pk_opt_control_mass_0, pk_kdv_opt_mass_soln_0 = KoopmanMPC(
+pk_opt_control_mass_0, pk_kdv_opt_mass_soln_0, pk_results_mass_0, pk_t_list_mass_0 = KoopmanMPC(
     y0=y0_track,
     tau=tau,
     traj_len=traj_len_track,
@@ -541,7 +574,7 @@ pk_opt_control_mass_0, pk_kdv_opt_mass_soln_0 = KoopmanMPC(
     loss=mpc_loss_pk,
     lambda_param=0,
 )
-pk_opt_control_mass_5, pk_kdv_opt_mass_soln_5 = KoopmanMPC(
+pk_opt_control_mass_5, pk_kdv_opt_mass_soln_5, pk_results_mass_5, linear_t_list_mass_5 = KoopmanMPC(
     y0=y0_track,
     tau=tau,
     traj_len=traj_len_track,
@@ -549,9 +582,10 @@ pk_opt_control_mass_5, pk_kdv_opt_mass_soln_5 = KoopmanMPC(
     kdv_solver=kdv.kdv_solution,
     B=B_mass,
     loss=mpc_loss_pk,
-    lambda_param=0.005,
+    lambda_param=0.005
 )
-linear_opt_control_mass_0, linear_kdv_opt_mass_soln_0 = KoopmanMPC(
+
+linear_opt_control_mass_0, linear_kdv_opt_mass_soln_0, linear_results_mass_0, linear_t_list_mass_0 = KoopmanMPC(
     y0=y0_track,
     tau=tau,
     traj_len=traj_len_track,
@@ -561,7 +595,7 @@ linear_opt_control_mass_0, linear_kdv_opt_mass_soln_0 = KoopmanMPC(
     loss=mpc_loss_linear,
     lambda_param=0,
 )
-linear_opt_control_mass_5, linear_kdv_opt_mass_soln_5 = KoopmanMPC(
+linear_opt_control_mass_5, linear_kdv_opt_mass_soln_5, linear_results_mass_5, linear_t_list_mass_5 = KoopmanMPC(
     y0=y0_track,
     tau=tau,
     traj_len=traj_len_track,
@@ -571,7 +605,7 @@ linear_opt_control_mass_5, linear_kdv_opt_mass_soln_5 = KoopmanMPC(
     loss=mpc_loss_linear,
     lambda_param=0.005,
 )
-bilinear_opt_control_mass_0, bilinear_kdv_opt_mass_soln_0 = KoopmanMPC(
+bilinear_opt_control_mass_0, bilinear_kdv_opt_mass_soln_0, bilinear_results_mass_0, bilinear_t_list_mass_0 = KoopmanMPC(
     y0=y0_track,
     tau=tau,
     traj_len=traj_len_track,
@@ -581,7 +615,7 @@ bilinear_opt_control_mass_0, bilinear_kdv_opt_mass_soln_0 = KoopmanMPC(
     loss=mpc_loss_bilinear,
     lambda_param=0,
 )
-bilinear_opt_control_mass_5, bilinear_kdv_opt_mass_soln_5 = KoopmanMPC(
+bilinear_opt_control_mass_5, bilinear_kdv_opt_mass_soln_5, bilinear_results_mass_5, bilinear_t_list_mass_5 = KoopmanMPC(
     y0=y0_track,
     tau=tau,
     traj_len=traj_len_track,
@@ -651,9 +685,18 @@ kdv_opt_control = compute_kdv_soln(y0_track, control_exact_opt)
 kdv_opt_control = np.asarray(kdv_opt_control)
 kdv_opt_mass = dx * tf.reshape(tf.math.reduce_sum(kdv_opt_control, axis=-1), shape=(-1, 1))
 
+
 plt.figure(figsize=(10, 5))
 plt.plot(mass_ref, label="Reference", linestyle="--", color=ref_color, linewidth=linewidth)
 
+
+plt.plot(
+    pk_kdv_opt_mass_0,
+    label=r"$Ours(\lambda = 0)$", 
+    color=pk_no_penalty_color, 
+    linestyle=pk_linestyle, 
+    linewidth=linewidth
+)
 plt.plot(
     linear_kdv_opt_mass_0,
     label=r"$M2(\lambda = 0)$",
@@ -668,16 +711,16 @@ plt.plot(
     linestyle=bilinear_linestyle,
     linewidth=linewidth,
 )
+
+
+
 plt.plot(
-    pk_kdv_opt_mass_0,
-    label=r"$Ours(\lambda = 0)$", 
-    color=pk_no_penalty_color, 
+    pk_kdv_opt_mass_5,
+    label=r"$Ours(\lambda = 0.005)$",
+    color=pk_curve, 
     linestyle=pk_linestyle, 
-    linewidth=linewidth,
-    alpha=0.7
+    linewidth=linewidth
 )
-
-
 plt.plot(
     linear_kdv_opt_mass_5,
     label=r"$M2(\lambda = 0.005)$",
@@ -692,16 +735,8 @@ plt.plot(
     linestyle=bilinear_linestyle,
     linewidth=linewidth,
 )
-plt.plot(
-    pk_kdv_opt_mass_5,
-    label=r"$Ours(\lambda = 0.005)$",
-    color=pk_curve, 
-    linestyle=pk_linestyle, 
-    linewidth=linewidth,
-    alpha=0.5
-)
 
-plt.plot(kdv_opt_mass, label="KdV", linestyle="--", color=exact_color, linewidth=linewidth, alpha=0.5)
+plt.plot(kdv_opt_mass, label="KdV", linestyle="--", color=exact_color, linewidth=linewidth)
 
 plt.xticks(fontsize=ticks_font)
 plt.yticks(fontsize=ticks_font)
@@ -719,7 +754,7 @@ plt.close()
 print("---Track Mass Done---")
 
 ### Track momentum
-pk_opt_control_momentum_0, pk_kdv_opt_momentum_soln_0 = KoopmanMPC(
+pk_opt_control_momentum_0, pk_kdv_opt_momentum_soln_0, pk_results_momentum_0, pk_t_list_momentum_0 = KoopmanMPC(
     y0=y0_track,
     tau=tau,
     traj_len=traj_len_track,
@@ -729,7 +764,7 @@ pk_opt_control_momentum_0, pk_kdv_opt_momentum_soln_0 = KoopmanMPC(
     loss=mpc_loss_pk,
     lambda_param=0,
 )
-pk_opt_control_momentum_5, pk_kdv_opt_momentum_soln_5 = KoopmanMPC(
+pk_opt_control_momentum_5, pk_kdv_opt_momentum_soln_5, pk_results_momentum_5, pk_t_list_momentum_5 = KoopmanMPC(
     y0=y0_track,
     tau=tau,
     traj_len=traj_len_track,
@@ -739,7 +774,7 @@ pk_opt_control_momentum_5, pk_kdv_opt_momentum_soln_5 = KoopmanMPC(
     loss=mpc_loss_pk,
     lambda_param=0.005,
 )
-linear_opt_control_momentum_0, linear_kdv_opt_momentum_soln_0 = KoopmanMPC(
+linear_opt_control_momentum_0, linear_kdv_opt_momentum_soln_0, linear_results_momentum_0, linear_t_list_momentum_0 = KoopmanMPC(
     y0=y0_track,
     tau=tau,
     traj_len=traj_len_track,
@@ -749,7 +784,7 @@ linear_opt_control_momentum_0, linear_kdv_opt_momentum_soln_0 = KoopmanMPC(
     loss=mpc_loss_linear,
     lambda_param=0,
 )
-linear_opt_control_momentum_5, linear_kdv_opt_momentum_soln_5 = KoopmanMPC(
+linear_opt_control_momentum_5, linear_kdv_opt_momentum_soln_5, linear_results_momentum_5, linear_t_list_momentum_5 = KoopmanMPC(
     y0=y0_track,
     tau=tau,
     traj_len=traj_len_track,
@@ -759,7 +794,7 @@ linear_opt_control_momentum_5, linear_kdv_opt_momentum_soln_5 = KoopmanMPC(
     loss=mpc_loss_linear,
     lambda_param=0.005,
 )
-bilinear_opt_control_momentum_0, bilinear_kdv_opt_momentum_soln_0 = KoopmanMPC(
+bilinear_opt_control_momentum_0, bilinear_kdv_opt_momentum_soln_0, bilinear_results_momentum_0, bilinear_t_list_momentum_0 = KoopmanMPC(
     y0=y0_track,
     tau=tau,
     traj_len=traj_len_track,
@@ -769,7 +804,7 @@ bilinear_opt_control_momentum_0, bilinear_kdv_opt_momentum_soln_0 = KoopmanMPC(
     loss=mpc_loss_bilinear,
     lambda_param=0,
 )
-bilinear_opt_control_momentum_5, bilinear_kdv_opt_momentum_soln_5 = KoopmanMPC(
+bilinear_opt_control_momentum_5, bilinear_kdv_opt_momentum_soln_5, bilinear_results_momentum_5, bilinear_t_list_momentum_5 = KoopmanMPC(
     y0=y0_track,
     tau=tau,
     traj_len=traj_len_track,
@@ -785,32 +820,41 @@ bilinear_kdv_opt_momentum_0 = dx * tf.reduce_sum(tf.square(bilinear_kdv_opt_mome
 pk_kdv_opt_momentum_5 = dx * tf.reduce_sum(tf.square(pk_kdv_opt_momentum_soln_5), axis=-1)
 linear_kdv_opt_momentum_5 = dx * tf.reduce_sum(tf.square(linear_kdv_opt_momentum_soln_5), axis=-1)
 bilinear_kdv_opt_momentum_5 = dx * tf.reduce_sum(tf.square(bilinear_kdv_opt_momentum_soln_5), axis=-1)
+
 plt.figure(figsize=(10, 5))
 plt.plot(momentum_ref, label="Reference", linestyle="--", color=ref_color, linewidth=linewidth)
 
+
+plt.plot(
+    pk_kdv_opt_momentum_0,
+    label=r"$Ours(\lambda = 0)$",
+    color=pk_no_penalty_color, 
+    linestyle=pk_linestyle, 
+    linewidth=linewidth
+)
 plt.plot(
     linear_kdv_opt_momentum_0,
     label=r"$M2(\lambda = 0)$",
     color=linear_no_penalty_color,
     linestyle=linear_linestyle,
-    linewidth=linewidth,
+    linewidth=linewidth
 )
 plt.plot(
     bilinear_kdv_opt_momentum_0,
     label=r"$M3(\lambda = 0)$",
     color=bilinear_no_penalty_color,
     linestyle=bilinear_linestyle,
-    linewidth=linewidth,
-)
-plt.plot(
-    pk_kdv_opt_momentum_0,
-    label=r"$Ours(\lambda = 0)$",
-    color=pk_no_penalty_color, 
-    linestyle=pk_linestyle, 
-    linewidth=linewidth,
-    alpha=0.7
+    linewidth=linewidth
 )
 
+
+plt.plot(
+    pk_kdv_opt_momentum_5,
+    label=r"$Ours(\lambda = 0.005)$",
+    color=pk_curve, 
+    linestyle=pk_linestyle, 
+    linewidth=linewidth
+)
 plt.plot(
     linear_kdv_opt_momentum_5,
     label=r"$M2(\lambda = 0.005)$",
@@ -824,14 +868,6 @@ plt.plot(
     color=bilinear_curve,
     linestyle=bilinear_linestyle,
     linewidth=linewidth,
-)
-plt.plot(
-    pk_kdv_opt_momentum_5,
-    label=r"$Ours(\lambda = 0.005)$",
-    color=pk_curve, 
-    linestyle=pk_linestyle, 
-    linewidth=linewidth,
-    alpha=0.5
 )
 
 
@@ -851,3 +887,27 @@ print("---Track Momentum Done---")
 
 
 
+# Save data
+results_dict = {'pk_kdv_opt_momentum_0': pk_kdv_opt_momentum_0,
+            'linear_kdv_opt_momentum_0':linear_kdv_opt_momentum_0,
+            'bilinear_kdv_opt_momentum_0': bilinear_kdv_opt_momentum_0,
+            'pk_kdv_opt_momentum_5': pk_kdv_opt_momentum_5,
+            'linear_kdv_opt_momentum_5':linear_kdv_opt_momentum_5,
+            'bilinear_kdv_opt_momentum_5': bilinear_kdv_opt_momentum_5,
+            'pk_kdv_opt_mass_0': pk_kdv_opt_mass_0,
+            'linear_kdv_opt_mass_0':linear_kdv_opt_mass_0,
+            'bilinear_kdv_opt_mass_0': bilinear_kdv_opt_mass_0,
+            'pk_kdv_opt_mass_5': pk_kdv_opt_mass_5,
+            'linear_kdv_opt_mass_5':linear_kdv_opt_mass_5,
+            'bilinear_kdv_opt_mass_5': bilinear_kdv_opt_mass_5,
+            'mass_ref':mass_ref,
+            'momentum_ref':momentum_ref,
+            'pk_t_list_momentum_0': pk_t_list_momentum_0,
+            'linear_t_list_momentum_0': linear_t_list_momentum_0,
+            'bilinear_t_list_momentum_0': bilinear_t_list_momentum_0,
+            'pk_t_list_momentum_5': pk_t_list_momentum_5,
+            'linear_t_list_momentum_5': linear_t_list_momentum_5,
+            'bilinear_t_list_momentum_5': bilinear_t_list_momentum_5,
+}
+
+np.save(os.path.join(data_path,'sin_tau_'+str(tau)+'_tracking_results.npy'), results_dict)

@@ -20,11 +20,18 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 config_file = sys.argv[1]
 with open(config_file) as f:
-    config = json.load(f)["linear"]
+    config = json.load(f)["sin"]
 
 data_path = config["data_settings"]["data_path"]
 weights_path = config["nn_settings"]["weights_path"]
 forcing_type = config["data_settings"]["forcing_type"]
+
+# Check if the folder exists, if not, create it
+if not os.path.exists(weights_path):
+    os.makedirs(weights_path)
+    print(f"Directory {weights_path} created.")
+else:
+    print(f"Directory {weights_path} already exists.")
 
 n_psi_train = config["nn_settings"]["n_psi_train"]
 
@@ -44,9 +51,13 @@ linear_epochs = config["nn_settings"]["linear_epochs"]
 bilinear_epochs = config["nn_settings"]["bilinear_epochs"]
 pknn_epochs = config["nn_settings"]["pknn_epochs"]
 
+
+print('K_layer_size', K_layer_size)
+
+
 # Load data
 dict_data = np.load(
-    os.path.join(data_path, "data_kdv_" + forcing_type + ".npy"), allow_pickle=True
+    os.path.join(data_path, "data_kdv_" + forcing_type + "_"+str(Nx)+".npy"), allow_pickle=True
 )
 
 data_x = dict_data[()]["data_x"]
@@ -159,7 +170,7 @@ solver_bilinear.build(
     data_u,
     data_y,
     zeros_data_y_train,
-    epochs=bilinear_epochs,
+    epochs=linear_epochs,
     batch_size=200,
     lr=0.0001,
     lr_patience=100,
