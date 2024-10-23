@@ -1,0 +1,15 @@
+README.md
+setup.cfg
+setup.py
+src/koopman.egg-info/PKG-INFO
+src/koopman.egg-info/SOURCES.txt
+src/koopman.egg-info/dependency_links.txt
+src/koopman.egg-info/requires.txt
+src/koopman.egg-info/top_level.txt
+src/koopmanlib/K_structure.py
+src/koopmanlib/__init__.py
+src/koopmanlib/dictionary.py
+src/koopmanlib/functions.py
+src/koopmanlib/param_solver.py
+src/koopmanlib/solver.py
+src/koopmanlib/target.py

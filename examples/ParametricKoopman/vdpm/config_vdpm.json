@@ -1,0 +1,18 @@
+{
+    "data_settings": {
+        "data_path": "vdpm_results/data",
+        "figures_path": "vdpm_results/figures",
+        "n_traj":1000,
+        "traj_len": 50,
+        "mu":[0,1,2,3,4]
+    },
+    "nn_settings": {
+        "weights_path": "vdpm_results/weights",
+        "n_psi_train": 10,
+        "dict_layer_size": [64,64],
+        "K_layer_size": [[128], [128], [128], [128], [128]],
+        "linear_epochs": 500,
+        "bilinear_epochs": 500,
+        "pknn_epochs": 500
+    }
+}

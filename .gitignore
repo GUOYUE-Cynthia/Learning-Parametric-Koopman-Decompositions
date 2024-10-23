@@ -1,7 +1,12 @@
 **/.DS_Store
 **/.ipynb_checkpoints
 **/__pycache__
-examples/Parametric Koopman/duffing/duffing_results
-examples/Parametric Koopman/fhn/fhn_results
-examples/Parametric Koopman/vdpm/vdpm_results
-examples/Parametric Koopman/kdv/kdv_results
+# examples/Parametric Koopman/duffing/duffing_results
+# examples/Parametric Koopman/fhn/fhn_results
+# examples/Parametric Koopman/vdpm/vdpm_results
+# examples/Parametric Koopman/kdv/kdv_results
+**/*_results*/data/
+**/*_results*/weights/
+/.vscode
+/pknn
+/pknn_test
