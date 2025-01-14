@@ -20,7 +20,7 @@ This project uses `python 3.8`. Set up the project for development using the fol
 2. Activate the environment
 
    ```bash
-   $source ~/.virtualenvs/koopman_env/bin/activate
+   $source koopman_env/bin/activate
    ```
 
    Ensure the environment is located in the folder __*/.virtualenvs*__. If not, first confirm the path of the environment and adjust it accordingly.
